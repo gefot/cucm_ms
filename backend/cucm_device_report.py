@@ -16,7 +16,11 @@ from modules import module_cucm_funcs, module_db_funcs, module_network_device_fu
 #####################################################################
 ## Constant Variables
 #####################################################################
-data = json.load(open('../data/access.json'))
+# data = json.load(open('../data/access.json'))                 # Windows
+# DEVICE_REPORT_FILE = '../data/output/device_report.txt'
+
+data = json.load(open('/home/pbx/cucm_ms/data/access.json'))  # Linux
+# DEVICE_REPORT_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/device_report.txt'
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'cm_server_ip_address': str(data["cucm"]["pub_ip_address"]), \
@@ -25,9 +29,7 @@ CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'soap_pass': str(data["cucm"]["soap_pass"])
                 }
 
-DEVICE_REPORT_FILE = '../data/output/device_report.txt'                 # Windows
 
-# DEVICE_REPORT_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/device_report.txt'      # Linux
 
 # #####################################################################
 start = datetime.datetime.now()

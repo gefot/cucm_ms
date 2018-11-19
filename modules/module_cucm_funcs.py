@@ -20,10 +20,9 @@ def cucm_axl_query(CM_CREDS, command, query):
         imp = Import('http://schemas.xmlsoap.org/soap/encoding/', 'http://schemas.xmlsoap.org/soap/encoding/')
         imp.filter.add(tns)
 
-        # wsdl_file_location = 'file://{}AXLAPI.wsdl'.format('/stats/mrtg/scripts/voip_stats/'      # Linux
-        # wsdl_file_location = 'file://{}AXLAPI.wsdl'.format('/D:/_gfot/PyCharmProjects/cucm/')     # Windows
-        my_path = '/' + str(Path(os.getcwd()).parent).replace('\\', '/') + '/data/'
-        wsdl_file_location = 'file://{}AXLAPI.wsdl'.format(my_path)  # Windows
+        my_path = '/' + str(Path(os.getcwd()).parent).replace('\\', '/') + '/data/'     # Windows
+        my_path = '/home/pbx/cucm_ms/data/'                                             # Linux
+        wsdl_file_location = 'file://{}AXLAPI.wsdl'.format(my_path)
 
         url_location = 'https://{}:{}/axl/'.format(CM_CREDS['cm_server_hostname'], CM_CREDS['cm_server_port'])
         client = Client(wsdl_file_location, location=url_location, username=CM_CREDS['soap_user'], \
