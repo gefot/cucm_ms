@@ -20,7 +20,7 @@ def cucm_axl_query(CM_CREDS, command, query):
         imp = Import('http://schemas.xmlsoap.org/soap/encoding/', 'http://schemas.xmlsoap.org/soap/encoding/')
         imp.filter.add(tns)
 
-        my_path = '/' + str(Path(os.getcwd()).parent).replace('\\', '/') + '/data/'     # Windows
+        # my_path = '/' + str(Path(os.getcwd()).parent).replace('\\', '/') + '/data/'     # Windows
         my_path = '/home/pbx/cucm_ms/data/'                                             # Linux
         wsdl_file_location = 'file://{}AXLAPI.wsdl'.format(my_path)
 
