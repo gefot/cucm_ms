@@ -33,8 +33,8 @@ SW_CREDS = {'my_connection_type': str(data["switch"]["device_connection_type"]),
 
 SWITCH_FILE = '../data/voip_switches.txt'                               # Windows
 MAIL_FILE = '../data/output/cucm_sanity_security.txt'
-# SWITCH_FILE = '/stats/mrtg/scripts/voip_stats/voip_switches.txt'      # Linux
-# MAIL_FILE = '/stats/mrtg/scripts/voip_stats/cucm_sanity_security.txt'
+# SWITCH_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/voip_switches.txt'      # Linux
+# MAIL_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/cucm_sanity_security.txt'
 
 ################################################################################
 start = datetime.datetime.now()
