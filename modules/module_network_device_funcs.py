@@ -4,11 +4,13 @@ import re
 import time
 
 
-#####################################################################
+########################################################################################################################
 def device_connect(my_device, SW_CREDS):
-    '''
-    Connects to switch and returns 'conn' connector
-    '''
+    """
+    :param my_device: the switch to connect
+    :param SW_CREDS: switch credentials
+    :return: switch connector
+    """
     try:
         dev = dict(ip=my_device, device_type=SW_CREDS['my_connection_type'], username=SW_CREDS['sw_username'], \
                    password=SW_CREDS['sw_password'], secret=SW_CREDS['sw_enable'], \
@@ -20,14 +22,14 @@ def device_connect(my_device, SW_CREDS):
 
     except Exception as ex:
         print("device_connect exception: ", ex.message)
-        raise RuntimeError("Could not connect to device")
 
 
-#####################################################################
+########################################################################################################################
 def get_cluster_members(conn):
-    '''
-    Connects to a switch (conn) and returns list of cluster member IDs
-    '''
+    """
+    :param conn: switch connector
+    :return: list of switch cluster members, eg [0,1,2,3] or ['0'] if none
+    """
     try:
         command = "show cluster members"
         module = "0"
@@ -46,14 +48,15 @@ def get_cluster_members(conn):
 
     except Exception as ex:
         print("get_cluster_members exception: ", ex.message)
-        raise RuntimeError("Could not get cluster members")
 
 
-#####################################################################
+########################################################################################################################
 def get_device_model(conn, module):
-    '''
-    Connects to a switch/module and return device type
-    '''
+    """
+    :param conn: switch connector
+    :param module: cluster module number
+    :return: device model (eg. WS-C2950C-24)
+    """
     try:
         command = "show version"
         result = device_show_cmd(conn, command, module)
@@ -64,15 +67,16 @@ def get_device_model(conn, module):
 
     except Exception as ex:
         print("get_device_model exception: ", ex.message)
-        raise RuntimeError("Could not get switch version")
 
 
-#####################################################################
+########################################################################################################################
 def device_show_cmd(conn, command, module):
-    '''
-    Execute a "show" command on an already created connector (conn)
-    If module is "0" then command is executed on the commander device (for switches)
-    '''
+    """
+    :param conn: switch connector
+    :param command: CLI command
+    :param module: cluster member number
+    :return: output for CLI show command
+    """
     try:
         if module == "0":
             result = conn.send_command(command)
@@ -88,14 +92,15 @@ def device_show_cmd(conn, command, module):
 
     except Exception as ex:
         print("device_show_cmd exception: ", ex.message)
-        raise RuntimeError("Could not execute show command")
 
 
-#####################################################################
+########################################################################################################################
 def get_switch_trunk_ports(connection, module):
-    '''
-    Find trunk interfaces on a switch and return corresponding list of trunk ports (eg. ['Fa0/1', 'Gi0/2'] )
-    '''
+    """
+    :param connection: switch connector
+    :param module: cluster member number
+    :return: trunk interface list, eg. ['Fa0/1', 'Gi0/2']
+    """
     try:
         trunk_ports = []
 
@@ -115,15 +120,16 @@ def get_switch_trunk_ports(connection, module):
 
     except Exception as ex:
         print("get_switch_trunk_ports exception: ", ex.message)
-        raise RuntimeError("Could not get MAC addresses")
 
 
-#####################################################################
+########################################################################################################################
 def get_switch_mac_table(connection, device_model, module):
-    '''
-    Connect to switch and get mac address table for all ports except trunks
-    Returns a list of lists ([vlan, mac address, port] - [string, string, string])
-    '''
+    """
+    :param connection: switch connector
+    :param device_model: switch model (because show mac address-table is differentiated)
+    :param module: cluster member number
+    :return: [vlan, mac address, port]
+    """
     try:
         if re.search('WS-C2950', device_model):
             command = "show mac-address-table"
@@ -155,10 +161,9 @@ def get_switch_mac_table(connection, device_model, module):
 
     except Exception as ex:
         print("get_switch_mac_table exception: ", ex.message)
-        raise RuntimeError("Could not get MAC table")
 
 
-# ############################################################################################################################################################
+########################################################################################################################
 # # Get port label for a device; eg. Gi/Fe 0/x
 # def get_port_label(connection, device_model, module):
 # 	try:
@@ -195,7 +200,7 @@ def get_switch_mac_table(connection, device_model, module):
 # 		raise RuntimeError("Could not get port status")
 #
 #
-# ############################################################################################################################################################
+########################################################################################################################
 # # Return output of "show power inline" for a specific port
 # def get_port_power(connection, device_model, module, port_label, port):
 # 	try:
@@ -223,7 +228,7 @@ def get_switch_mac_table(connection, device_model, module):
 # 		raise RuntimeError("Could not get port power")
 #
 #
-# #####################################################################
+########################################################################################################################
 # # Return TDR results for a specific port
 # def get_port_tdr(connection, device_model, module, port_label, port):
 # 	try:
@@ -244,7 +249,7 @@ def get_switch_mac_table(connection, device_model, module):
 # 		raise RuntimeError("Could not get port TDR")
 #
 #
-# ############################################################################################################################################################
+########################################################################################################################
 # # Return a list of MAC addresses for a specific port
 # def get_port_macs(connection, device_model, module, port_label, port):
 # 	try:
@@ -266,7 +271,7 @@ def get_switch_mac_table(connection, device_model, module):
 #
 #
 
-# #####################################################################
+########################################################################################################################
 # def tshoot_ipphone(conn,switchport,mac_address):
 #
 # 	try:
@@ -320,4 +325,4 @@ def get_switch_mac_table(connection, device_model, module):
 # 		return ["unknown", "unknown","unknown","unknown","unknown"]
 #
 #
-# #####################################################################
+########################################################################################################################

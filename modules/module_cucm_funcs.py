@@ -1,4 +1,7 @@
 
+import os
+import ssl
+from pathlib import Path
 import datetime
 
 import pexpect                      # pexpect
@@ -6,23 +9,24 @@ from suds.xsd.doctor import Import  # suds-jurko
 from suds.xsd.doctor import ImportDoctor    # suds-jurko
 from suds.client import Client      # suds-jurko
 # from suds import WebFault         # suds-jurko
-import os
-import ssl
-from pathlib import Path
 
 
-#################################################################################
+########################################################################################################################
 def cucm_axl_query(CM_CREDS, command, query):
-    '''
-    Connect to CUCM AXL interface and execute a SOAP query based on one of the three functions
-    (executeSQLQuery, getPhone, listPhone) using a predefined WSDL file, which is stored locally.
+    """
+    Utilize CUCM AXL interface using SOAP
+    Uses a predefined WSDL file, which is stored locally.
 
-    Used in: get_configured devices
-    '''
+    Used in: cucm_get_configured_devices
+
+    :param CM_CREDS:
+    :param command:
+    :param query:
+    :return: client
+    """
     try:
         my_path = '/' + str(Path(os.getcwd()).parent).replace('\\', '/') + '/data/'     # Windows
         wsdl_file_location = 'file://{}AXLAPI.wsdl'.format(my_path)
-
 
         tns = 'http://schemas.cisco.com/ast/soap/'
         imp = Import('http://schemas.xmlsoap.org/soap/encoding/', 'http://schemas.xmlsoap.org/soap/encoding/')
@@ -49,11 +53,18 @@ def cucm_axl_query(CM_CREDS, command, query):
         return None
 
 
-#################################################################################
+########################################################################################################################
 def cucm_risport_query(CM_CREDS, command, query):
-    '''
-    Connect to CUCM RisPort interface using SOAP
-    '''
+    """
+    Utilize CUCM RisPort interface using SOAP
+
+    Used in: cucm_fill_devices_status
+
+    :param CM_CREDS: CUCM credentials
+    :param command: eg: SelectCmDevice
+    :param query: the query itself
+    :return: client
+    """
     try:
         tns = 'http://schemas.cisco.com/ast/soap/'
         imp = Import('http://schemas.xmlsoap.org/soap/encoding/', 'http://schemas.xmlsoap.org/soap/encoding/')
@@ -77,12 +88,12 @@ def cucm_risport_query(CM_CREDS, command, query):
         return None
 
 
-#################################################################################
+########################################################################################################################
 def cucm_get_configured_devices(CM_CREDS):
-    '''
-    Takes CUCM credentials dictionary as argument
-    Returns all CUCM configured devices as a list [mac_address, extension, description, device type]
-    '''
+    """
+    :param CM_CREDS: CUCM credentials
+    :return: [mac_address, description, extension, alerting name, device type]
+    """
     try:
         sql_query = "select a.name, a.description, b.dnorpattern, b.alertingname, c.display, d.name as type from device as a, \
         numplan as b, devicenumplanmap as c, typemodel as d where c.fkdevice = a.pkid and c.fknumplan = b.pkid and \
@@ -106,12 +117,12 @@ def cucm_get_configured_devices(CM_CREDS):
         return None
 
 
-#################################################################################
+########################################################################################################################
 def cucm_count_interering_devices(devices):
-    '''
-    Count CUCM devices: Total(0), IP Phones(1), ATA devices(2), ATA ports(3), Analog(4), Jabber(5)
-    Returns a list of numbers with the number of appearances.
-    '''
+    """
+    :param devices: list of (configured) devices
+    :return: [Total, IP Phones, ATA devices, ATA ports, Analog, Jabber]
+    """
     try:
         device_count = [0] * 6
         for device in devices:
@@ -137,11 +148,13 @@ def cucm_count_interering_devices(devices):
         return [0] * 5
 
 
-#################################################################################
+########################################################################################################################
 def cucm_fill_devices_status(CM_CREDS, all_devices):
-    '''
-    Use RIS interface to get registration status and timestamps for all devices
-    '''
+    """
+    :param CM_CREDS: CUCM Credentials
+    :param all_devices: configured devices
+    :return: [mac_address, description, extension, alerting name, device type, status, timestamp]
+    """
     try:
         command = "SelectCmDevice"
         query = {'SelectBy': 'Name', 'Status': 'Any', 'Class': 'Any', 'MaxReturnedDevices': '5000'}

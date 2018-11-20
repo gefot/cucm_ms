@@ -2,11 +2,12 @@
 import pymysql as mariadb       # PyMySQL
 
 
-#####################################################################
+########################################################################################################################
 def db_connect(DB_CREDS):
-    '''
-    Connects to database and returns 'conn' connector
-    '''
+    """
+    :param DB_CREDS: database credentials
+    :return: database connector
+    """
     try:
         conn = mariadb.connect(DB_CREDS['db_host'], DB_CREDS['db_username'], DB_CREDS['db_password'], DB_CREDS['db_name'])
         return conn
@@ -15,8 +16,7 @@ def db_connect(DB_CREDS):
         print("db_connect exception: ", ex)
         return None
 
-
-########################################################################
+########################################################################################################################
 # def execute_db_query(cursor, query):
 #     try:
 #         cursor.execute(query)
@@ -29,11 +29,13 @@ def db_connect(DB_CREDS):
 #         return None
 
 
-########################################################################
+########################################################################################################################
 def fetch_from_db_per_dn(cursor, dn):
-    '''
-    Queries database based on extension (dn) and returns list [name, unit_id, switchport, isPoE]
-    '''
+    """
+    :param cursor: database cursor (connector)
+    :param dn: extension
+    :return: [name, unit_id, switchport, isPoE]
+    """
     try:
         # Get person_id, unit_id, access_outlet_id
         query = "select name, macaddress, assigned_to_person, assigned_to_unit, access_outlet_id from tel_extensions where number = '{}'".format(dn)
@@ -92,4 +94,4 @@ def fetch_from_db_per_dn(cursor, dn):
         return 'unknown', 'unknown', 'unknown', 'unknown'
 
 
-########################################################################
+########################################################################################################################
