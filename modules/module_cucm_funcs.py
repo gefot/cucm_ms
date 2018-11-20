@@ -1,3 +1,4 @@
+
 import datetime
 
 import pexpect                      # pexpect
@@ -21,6 +22,7 @@ def cucm_axl_query(CM_CREDS, command, query):
     try:
         my_path = '/' + str(Path(os.getcwd()).parent).replace('\\', '/') + '/data/'     # Windows
         wsdl_file_location = 'file://{}AXLAPI.wsdl'.format(my_path)
+
 
         tns = 'http://schemas.cisco.com/ast/soap/'
         imp = Import('http://schemas.xmlsoap.org/soap/encoding/', 'http://schemas.xmlsoap.org/soap/encoding/')
