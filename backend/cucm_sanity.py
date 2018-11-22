@@ -192,6 +192,7 @@ for mac in voice_vlan_mac_table:
 # Measure Script Execution
 print("\n--->Runtime After Processing = {} \n\n\n".format(datetime.datetime.now()-start))
 
+
 ################################################################################
 # Write file and send e-mail
 ################################################################################
