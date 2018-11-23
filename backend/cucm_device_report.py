@@ -39,8 +39,6 @@ start = datetime.datetime.now()
 try:
     all_devices = module_cucm_funcs.cucm_get_configured_devices(CM_PUB_CREDS)
     # print(all_devices)
-    all_devices_count = module_cucm_funcs.cucm_count_interering_devices(all_devices)
-    print("device count = ", all_devices_count)
 except Exception as ex:
     print(ex)
     exit(0)
@@ -54,11 +52,7 @@ print("\n--->Runtime After AXLAPI SQL query = {} \n\n\n".format(datetime.datetim
 ########################################################################################################################
 try:
     all_devices = module_cucm_funcs.cucm_fill_devices_status(CM_PUB_CREDS, all_devices)
-    all_devices = sorted(all_devices, key=operator.itemgetter(0), reverse=False)
-    for device in all_devices:
-        print(device)
-    all_devices_count = module_cucm_funcs.cucm_count_interering_devices(all_devices)
-    print("device count = ", all_devices_count)
+    all_devices = sorted(all_devices, key=operator.itemgetter(1), reverse=False)
 except Exception as ex:
     print(ex)
     exit(0)
@@ -75,8 +69,8 @@ try:
     cursor = conn.cursor()
     unreg_devices = []
     for device in all_devices:
-        if device[5] is "unregistered":
-            unreg_dev = device
+        if device[5] == "unregistered":
+            unreg_dev = device.copy()
             my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_db_per_dn(cursor, device[2])
             unreg_dev.extend((my_username, my_unit_id, my_switchport, my_isPoE))
             unreg_devices.append(unreg_dev)
@@ -86,16 +80,29 @@ except Exception as ex:
     conn.close()
     exit(0)
 
-for dev in unreg_devices:
-    print(dev)
-
 # Measure Script Execution
 print("\n--->Runtime After DB Queries = {} \n\n\n".format(datetime.datetime.now() - start))
 
 
-# ##########################
-# ## Troubleshooting Section
-# ##########################
+
+
+########################################################################################################################
+all_devices_count = module_cucm_funcs.cucm_count_interering_devices(all_devices)
+print("device count = ", all_devices_count)
+unreg_devices_count = module_cucm_funcs.cucm_count_interering_devices(unreg_devices)
+print("unreg device count = ", unreg_devices_count)
+
+print('======================================')
+for dev in all_devices:
+    print(dev)
+print('======================================')
+for dev in unreg_devices:
+    print(dev)
+
+
+########################################################################################################################
+# Troubleshooting Section
+########################################################################################################################
 # device_model = []
 # port_status = []
 # port_power = []
