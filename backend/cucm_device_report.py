@@ -1,5 +1,4 @@
 
-
 import json
 import datetime
 import operator
@@ -22,6 +21,12 @@ CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'soap_user': str(data["cucm"]["soap_user"]), \
                 'soap_pass': str(data["cucm"]["soap_pass"])
                 }
+
+DB_CREDS = {'db_host': str(data["db1"]["db_host"]), \
+            'db_username': str(data["db1"]["db_username"]), \
+            'db_password': str(data["db1"]["db_password"]), \
+            'db_name': str(data["db1"]["db_name"])
+            }
 
 
 ########################################################################################################################
@@ -62,34 +67,32 @@ except Exception as ex:
 print("\n--->Runtime After RIS query = {} \n\n\n".format(datetime.datetime.now() - start))
 
 
-# ########################################################
-# ## Connect to DB and get info for unregistered IP Phones
-# ########################################################
-# conn = mariadb.connect(authdb_host,authdb_username, authdb_password, authdb)
-# cur = conn.cursor()
-#
-# username = []
-# unit_id = []
-# switchport = []
-#
-# for device in unreg_devices:
-# 	my_username, my_unit_id, my_switchport = MOD_db_funcs.fetch_from_db_per_dn(cur,device[2])
-# 	username.append(my_username)
-# 	unit_id.append(my_unit_id)
-# 	switchport.append(my_switchport)
-#
-# conn.close()
-#
-# ## Measure Script Execution
-# print "\n\n--->Runtime After DB Queries = ",datetime.datetime.now()-start
-#
-# #print "\nUser/Outlet Info:\n"
-# #print "username = ",username,len(username)
-# #print "unit_id = ",unit_id,len(unit_id)
-# #print "switchport = ",switchport,len(switchport)
-# #print "\n"
-#
-#
+########################################################################################################################
+# Construct unred_devices and fill in with info from the database
+########################################################################################################################
+try:
+    conn = module_db_funcs.db_connect(DB_CREDS)
+    cursor = conn.cursor()
+    unreg_devices = []
+    for device in all_devices:
+        if device[5] is "unregistered":
+            unreg_dev = device
+            my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_db_per_dn(cursor, device[2])
+            unreg_dev.extend((my_username, my_unit_id, my_switchport, my_isPoE))
+            unreg_devices.append(unreg_dev)
+    conn.close()
+except Exception as ex:
+    print(ex)
+    conn.close()
+    exit(0)
+
+for dev in unreg_devices:
+    print(dev)
+
+# Measure Script Execution
+print("\n--->Runtime After DB Queries = {} \n\n\n".format(datetime.datetime.now() - start))
+
+
 # ##########################
 # ## Troubleshooting Section
 # ##########################
