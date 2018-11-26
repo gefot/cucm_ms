@@ -174,7 +174,7 @@ def cucm_fill_device_status2(CM_CREDS, all_devices):
                             device.status = str(status_device['Status']).lower()
 
             if not found_device:
-                device.timestamp = " More than a week"
+                device.timestamp = " More than two weeks"
                 device.status = "unregistered"
 
     except Exception as ex:
@@ -268,7 +268,7 @@ def cucm_fill_device_status(CM_CREDS, all_devices):
 
             if not found_device:
                 device.append("unregistered")
-                device.append(" More than a week")
+                device.append(" More than two weeks")
 
         return all_devices
 

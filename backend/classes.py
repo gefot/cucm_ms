@@ -6,10 +6,8 @@ class Phone:
         self.device_type = device_type
         self.extension = extension
         self.alerting_name = alerting_name
-
         self.status = None
         self.timestamp = None
-
         self.switchport = None
         self.responsible_person = None
 
