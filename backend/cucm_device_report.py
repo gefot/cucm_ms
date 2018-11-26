@@ -1,8 +1,7 @@
 import json
 import datetime
-import operator
 
-from modules import module_cucm_funcs, module_db_funcs, module_network_device_funcs
+from modules import module_cucm_funcs
 
 
 ########################################################################################################################
