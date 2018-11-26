@@ -4,7 +4,8 @@ import ssl
 from pathlib import Path
 import datetime
 
-import pexpect                      # pexpect
+from backend.classes import Phone
+
 from suds.xsd.doctor import Import  # suds-jurko
 from suds.xsd.doctor import ImportDoctor    # suds-jurko
 from suds.client import Client      # suds-jurko
@@ -89,6 +90,99 @@ def cucm_risport_query(CM_CREDS, command, query):
 
 
 ########################################################################################################################
+def cucm_get_configured_devices2(CM_CREDS):
+    """
+    :param CM_CREDS: CUCM credentials
+    :return: a list of Phone objects; populates: (mac_address,description,device type,extension,alerting name)
+    """
+    try:
+        sql_query = "select a.name, a.description, b.dnorpattern, b.alertingname, c.display, d.name as type from device as a, \
+        numplan as b, devicenumplanmap as c, typemodel as d where c.fkdevice = a.pkid and c.fknumplan = b.pkid and \
+        a.tkmodel = d.enum and numplanindex = 1"
+
+        result = cucm_axl_query(CM_CREDS, "executeSQLQuery", sql_query)
+
+        device_list_full_axl = result[1]['return'].row
+        all_configured_devices = []
+        for dev in device_list_full_axl:
+            if dev.name.startswith(("SEP", "ATA", "AALN", "AN", "CSF")):
+                temp_dev = Phone(str(dev.name), str(dev.description), str(dev.type), str(dev.dnorpattern), str(dev.alertingname))
+                all_configured_devices.append(temp_dev)
+            else:
+                continue
+
+        return all_configured_devices
+
+    except Exception as ex:
+        print("cucm_get_configured_devices exception: ", ex)
+        return None
+
+
+########################################################################################################################
+def cucm_count_interering_devices2(devices):
+    """
+    :param devices: list of CUCM devices
+    :return: a list of integers: [Total Devices, IP Phones, ATA devices, ATA ports, Analog, Jabber]
+    """
+    try:
+        device_count = [0] * 6
+        for device in devices:
+            if device.name.startswith("SEP"):
+                device_count[0] += 1
+                device_count[1] += 1
+            elif device.name.startswith("ATA"):
+                device_count[3] += 1        # ATA port count
+                if not device.name.endswith("01"):
+                    device_count[0] += 1
+                    device_count[2] += 1    # ATA device count
+            elif device.name.startswith("AN") or device.name.startswith("AALN"):
+                device_count[0] += 1
+                device_count[4] += 1
+            elif device.name.startswith("CSF"):
+                device_count[0] += 1
+                device_count[5] += 1
+
+        return device_count
+
+    except Exception as ex:
+        print("cucm_count_interering_devices exception: ", ex)
+        return [0] * 5
+
+
+########################################################################################################################50 Ευρώ, Φαγητά
+def cucm_fill_device_status2(CM_CREDS, all_devices):
+    """
+    :param CM_CREDS: CUCM Credentials
+    :param all_devices: cucm devices
+    :return: Nothing! It polutates the list of Phone objects with: (status, timestamp)
+    """
+    try:
+        command = "SelectCmDevice"
+        query = {'SelectBy': 'Name', 'Status': 'Any', 'Class': 'Any', 'MaxReturnedDevices': '5000'}
+
+        result = cucm_risport_query(CM_CREDS, command, query)
+
+        for device in all_devices:
+            found_device = False
+            for node in result['SelectCmDeviceResult']['CmNodes']:
+                if node['Name'] in CM_CREDS['cm_server_ip_address']:
+                    for status_device in node['CmDevices']:
+                        if device.name == status_device['Name']:
+                            found_device = True
+                            timestamp = datetime.datetime.fromtimestamp(int(status_device['TimeStamp'])).strftime('%Y-%m-%d %H:%M:%S')
+                            device.timestamp = timestamp
+                            device.status = str(status_device['Status']).lower()
+
+            if not found_device:
+                device.timestamp = " More than a week"
+                device.status = "unregistered"
+
+    except Exception as ex:
+        print("cucm_fill_devices_status exception: ", ex)
+        return None
+
+
+########################################################################################################################
 def cucm_get_configured_devices(CM_CREDS):
     """
     :param CM_CREDS: CUCM credentials
@@ -149,7 +243,7 @@ def cucm_count_interering_devices(devices):
 
 
 ########################################################################################################################50 Ευρώ, Φαγητά
-def cucm_fill_devices_status(CM_CREDS, all_devices):
+def cucm_fill_device_status(CM_CREDS, all_devices):
     """
     :param CM_CREDS: CUCM Credentials
     :param all_devices: configured devices
@@ -174,7 +268,7 @@ def cucm_fill_devices_status(CM_CREDS, all_devices):
 
             if not found_device:
                 device.append("unregistered")
-                device.append("More than a week")
+                device.append(" More than a week")
 
         return all_devices
 

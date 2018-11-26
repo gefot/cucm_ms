@@ -51,7 +51,7 @@ print("\n--->Runtime After AXLAPI SQL query = {} \n\n\n".format(datetime.datetim
 # Fill the list of the configured devices with info from RIS database
 ########################################################################################################################
 try:
-    all_devices = module_cucm_funcs.cucm_fill_devices_status(CM_PUB_CREDS, all_devices)
+    all_devices = module_cucm_funcs.cucm_fill_device_status(CM_PUB_CREDS, all_devices)
     all_devices = sorted(all_devices, key=operator.itemgetter(1), reverse=False)
 except Exception as ex:
     print(ex)
