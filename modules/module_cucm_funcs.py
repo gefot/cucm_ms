@@ -105,7 +105,8 @@ def cucm_get_configured_devices(CM_CREDS):
         device_list_full_axl = result[1]['return'].row
         all_configured_devices = []
         for dev in device_list_full_axl:
-            if dev.name.startswith(("SEP", "ATA", "AALN", "AN", "CSF")):
+            # if dev.name.startswith(("SEP", "ATA", "AALN", "AN", "CSF")):
+            if dev.name.startswith(("SEP", "ATA", "AALN", "AN")):
                 temp_dev = Phone(str(dev.name), str(dev.description), str(dev.type), str(dev.dnorpattern), str(dev.alertingname))
                 all_configured_devices.append(temp_dev)
             else:
@@ -122,7 +123,7 @@ def cucm_get_configured_devices(CM_CREDS):
 def cucm_count_interering_devices(devices):
     """
     :param devices: list of CUCM devices
-    :return: a list of integers: [Total Devices, IP Phones, ATA devices, ATA ports, Analog, Jabber]
+    :return: a list of integers: [Total Devices, IP Phones, ATA devices, ATA ports, Analog]
     """
     try:
         device_count = [0] * 6
@@ -138,9 +139,9 @@ def cucm_count_interering_devices(devices):
             elif device.name.startswith("AN") or device.name.startswith("AALN"):
                 device_count[0] += 1
                 device_count[4] += 1
-            elif device.name.startswith("CSF"):
-                device_count[0] += 1
-                device_count[5] += 1
+            # elif device.name.startswith("CSF"):
+            #     device_count[0] += 1
+            #     device_count[5] += 1
 
         return device_count
 
@@ -196,7 +197,6 @@ def cucm_get_translation_patterns(CM_CREDS):
         translation_list = result[1]['return'].row
         translation_patterns = {}
         for xlation in translation_list:
-            # translation_patterns[xlation.dnorpattern] = xlation.calledpartytransformationmask
             translation_patterns[str(xlation.calledpartytransformationmask)] = str(xlation.dnorpattern)
 
         return translation_patterns
