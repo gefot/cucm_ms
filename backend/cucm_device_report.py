@@ -61,8 +61,8 @@ print("\n--->Runtime After RIS query = {} \n\n\n".format(datetime.datetime.now()
 
 
 ########################################################################################################################
-# for dev in all_devices:
-#     dev.print_device_ris()
+for dev in all_devices:
+    dev.print_device_ris()
 all_devices_count = module_cucm_funcs.cucm_count_interering_devices(all_devices)
 print("device count = ", all_devices_count)
 

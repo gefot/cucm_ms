@@ -10,8 +10,10 @@ from modules import module_cucm_funcs, module_db_funcs, module_network_device_fu
 # Constant Variables
 ########################################################################################################################
 data = json.load(open('../data/access.json'))
+
 SWITCH_FILE = '../data/voip_switches.txt'                               # Windows
 MAIL_FILE = '../data/output/report_sanity_security.txt'
+
 # SWITCH_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/voip_switches.txt'      # Linux
 # MAIL_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/report_sanity_security.txt'
 
