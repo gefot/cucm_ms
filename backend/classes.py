@@ -2,6 +2,10 @@ class Phone:
 
     def __init__(self, name, description, device_type, extension, alerting_name):
         self.name = name
+        if name.startswith('SEP') or name.startswith('ATA'):
+            self.mac = name[3:]
+        else:
+            self.mac = ''
         self.description = description
         self.device_type = device_type
         self.extension = extension

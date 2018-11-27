@@ -11,9 +11,9 @@ from modules import module_cucm_funcs, module_db_funcs, module_network_device_fu
 ########################################################################################################################
 data = json.load(open('../data/access.json'))
 SWITCH_FILE = '../data/voip_switches.txt'                               # Windows
-MAIL_FILE = '../data/output/cucm_sanity_security.txt'
+MAIL_FILE = '../data/output/report_sanity_security.txt'
 # SWITCH_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/voip_switches.txt'      # Linux
-# MAIL_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/cucm_sanity_security.txt'
+# MAIL_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/report_sanity_security.txt'
 
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
@@ -43,10 +43,10 @@ start = datetime.datetime.now()
 
 
 ########################################################################################################################
-# Get a list of and count all configured devices
+# Get a list of all configured devices
 ########################################################################################################################
 try:
-    all_devices = module_cucm_funcs.cucm_get_configured_devices2(CM_PUB_CREDS)
+    all_devices = module_cucm_funcs.cucm_get_configured_devices(CM_PUB_CREDS)
 except Exception as ex:
     print(ex)
     exit(0)
@@ -56,26 +56,27 @@ print("\n--->Runtime After AXLAPI SQL query = {} \n\n\n".format(datetime.datetim
 
 
 ########################################################################################################################
-# Fills in all_devices with database info
-# all_devices = [mac_address, description, extension, alerting name, device type, username, unit_id, switchport, isPoE]
+# Fill in all_devices with database info
 ########################################################################################################################
 try:
     conn = module_db_funcs.db_connect(DB_CREDS)
     cursor = conn.cursor()
-    for device in all_devices:
-        my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_authdb_per_dn(cursor, device[2])
-        device.extend((my_username, my_unit_id, my_switchport, my_isPoE))
+    for dev in all_devices:
+        my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_authdb_per_dn(cursor, dev.extension)
+        dev.responsible_person = my_username
+        dev.switchport = my_switchport
     conn.close()
 except Exception as ex:
     print(ex)
     conn.close()
     exit(0)
 
-for device in all_devices:
-    print(device)
 
 # Measure Script Execution
 print("\n--->Runtime After DB Queries = {} \n\n\n".format(datetime.datetime.now()-start))
+
+# for dev in all_devices:
+#     dev.print_device_axl()
 
 
 ########################################################################################################################
@@ -89,7 +90,7 @@ try:
     fd.close()
     print(switch_list)
     # switch_list = ["bld67cbsmnt-sw", "bld34fl02-sw", "bld61fl00-sw"]
-    switch_list = ["bld61fl00-sw"]
+    switch_list = ["bld34fl02-sw"]
 
     switch_devices_table = []
     voice_vlan_mac_table = []
@@ -101,7 +102,6 @@ try:
         modules = module_network_device_funcs.get_cluster_members(conn)
 
         for module in modules:
-
             # Run 'show cdp neighbors' and get device and switchport
             result = module_network_device_funcs.device_show_cmd(conn, "show cdp neighbors", module)
             lines = result.split('\n')
@@ -143,17 +143,21 @@ print("\n--->Runtime After Accessing Switches = {} \n\n\n".format(datetime.datet
 # Sanity Check
 excluded_extensions = ['']
 # excluded_extensions = ['99999']   # Exclude these extensions from the check
+print("\n\n\n\n\n")
 try:
     sanity_body = ""
     for my_device1 in all_devices:
         for my_device2 in switch_devices_table:
             try:
-                if my_device1[0] == my_device2[0] and my_device1[2] not in excluded_extensions:      # MAC match check
-                    if my_device1[7] == my_device2[1]:  # switch port check
+                if my_device1.name == my_device2[0] and my_device1.extension not in excluded_extensions:      # MAC match check
+                    print(my_device1.name, my_device2[0])
+                    if my_device1.switchport == my_device2[1]:  # switch port check
+                        print(my_device1.switchport, my_device2[1])
                         pass
                     else:
+                        print(my_device1.switchport, my_device2[1])
                         sanity_text = "Mismatch: Extension %s (Device %s) found at switchport %s but is actually declared at %s\n" \
-                                      % (my_device1[2], my_device1[0], my_device2[1], my_device1[7])
+                                      % (my_device1.extension, my_device1.mac, my_device2[1], my_device1.switchport)
                         sanity_body += sanity_text
                 else:
                     continue
@@ -166,6 +170,7 @@ except Exception as ex:
     print(ex)
     exit(0)
 
+
 # Security Check
 excluded_macs = ['']
 # Excluded MACs: cvoice-rc-gw, 5x RC IP Phones registered at the old CUCM
@@ -174,8 +179,8 @@ excluded_macs = ['']
 security_body = ""
 for mac in voice_vlan_mac_table:
     found = False
-    for device in all_devices:
-        if mac[1] in device[0] or mac[1] in excluded_macs:
+    for device1 in all_devices:
+        if mac[1] in device1.mac or mac[1] in excluded_macs:
             found = True
 
     if found:

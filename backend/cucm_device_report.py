@@ -33,10 +33,10 @@ start = datetime.datetime.now()
 
 
 ########################################################################################################################
-# Get a list of and count all configured devices
+# Get a list of all configured devices
 ########################################################################################################################
 try:
-    all_devices = module_cucm_funcs.cucm_get_configured_devices2(CM_PUB_CREDS)
+    all_devices = module_cucm_funcs.cucm_get_configured_devices(CM_PUB_CREDS)
 except Exception as ex:
     print(ex)
     exit(0)
@@ -49,7 +49,7 @@ print("\n--->Runtime After AXLAPI SQL query = {} \n\n\n".format(datetime.datetim
 # Fill the list of the configured devices with info from RIS database
 ########################################################################################################################
 try:
-    module_cucm_funcs.cucm_fill_device_status2(CM_PUB_CREDS, all_devices)
+    module_cucm_funcs.cucm_fill_device_status(CM_PUB_CREDS, all_devices)
     # Sort Phone list by registration timestamp
     all_devices.sort(key=lambda x: x.description, reverse=False)
 except Exception as ex:
@@ -63,7 +63,7 @@ print("\n--->Runtime After RIS query = {} \n\n\n".format(datetime.datetime.now()
 ########################################################################################################################
 # for dev in all_devices:
 #     dev.print_device_ris()
-all_devices_count = module_cucm_funcs.cucm_count_interering_devices2(all_devices)
+all_devices_count = module_cucm_funcs.cucm_count_interering_devices(all_devices)
 print("device count = ", all_devices_count)
 
 

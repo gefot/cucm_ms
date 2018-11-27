@@ -55,7 +55,7 @@ def cucm_axl_query(CM_CREDS, command, query):
 
 
 ########################################################################################################################
-def cucm_risport_query(CM_CREDS, command, query):
+def cucm_ris_query(CM_CREDS, command, query):
     """
     Utilize CUCM RisPort interface using SOAP
 
@@ -85,12 +85,12 @@ def cucm_risport_query(CM_CREDS, command, query):
             return client.service.SelectCmDevice('', query)
 
     except Exception as ex:
-        print("cucm_risport_query exception: ", ex)
+        print("cucm_ris_query exception: ", ex)
         return None
 
 
 ########################################################################################################################
-def cucm_get_configured_devices2(CM_CREDS):
+def cucm_get_configured_devices(CM_CREDS):
     """
     :param CM_CREDS: CUCM credentials
     :return: a list of Phone objects; populates: (mac_address,description,device type,extension,alerting name)
@@ -119,7 +119,7 @@ def cucm_get_configured_devices2(CM_CREDS):
 
 
 ########################################################################################################################
-def cucm_count_interering_devices2(devices):
+def cucm_count_interering_devices(devices):
     """
     :param devices: list of CUCM devices
     :return: a list of integers: [Total Devices, IP Phones, ATA devices, ATA ports, Analog, Jabber]
@@ -150,7 +150,7 @@ def cucm_count_interering_devices2(devices):
 
 
 ########################################################################################################################
-def cucm_fill_device_status2(CM_CREDS, all_devices):
+def cucm_fill_device_status(CM_CREDS, all_devices):
     """
     :param CM_CREDS: CUCM Credentials
     :param all_devices: cucm devices
@@ -160,7 +160,7 @@ def cucm_fill_device_status2(CM_CREDS, all_devices):
         command = "SelectCmDevice"
         query = {'SelectBy': 'Name', 'Status': 'Any', 'Class': 'Any', 'MaxReturnedDevices': '5000'}
 
-        result = cucm_risport_query(CM_CREDS, command, query)
+        result = cucm_ris_query(CM_CREDS, command, query)
 
         for device in all_devices:
             found_device = False
@@ -183,7 +183,7 @@ def cucm_fill_device_status2(CM_CREDS, all_devices):
 
 
 ########################################################################################################################
-def cucm_get_configured_devices(CM_CREDS):
+def cucm_get_configured_devices2(CM_CREDS):
     """
     :param CM_CREDS: CUCM credentials
     :return: [mac_address, description, extension, alerting name, device type]
@@ -209,10 +209,8 @@ def cucm_get_configured_devices(CM_CREDS):
     except Exception as ex:
         print("cucm_get_configured_devices exception: ", ex)
         return None
-
-
 ########################################################################################################################
-def cucm_count_interering_devices(devices):
+def cucm_count_interering_devices2(devices):
     """
     :param devices: list of (configured) devices
     :return: [Total, IP Phones, ATA devices, ATA ports, Analog, Jabber]
@@ -240,10 +238,8 @@ def cucm_count_interering_devices(devices):
     except Exception as ex:
         print("cucm_count_interering_devices exception: ", ex)
         return [0] * 5
-
-
 ########################################################################################################################
-def cucm_fill_device_status(CM_CREDS, all_devices):
+def cucm_fill_device_status2(CM_CREDS, all_devices):
     """
     :param CM_CREDS: CUCM Credentials
     :param all_devices: configured devices
@@ -253,7 +249,7 @@ def cucm_fill_device_status(CM_CREDS, all_devices):
         command = "SelectCmDevice"
         query = {'SelectBy': 'Name', 'Status': 'Any', 'Class': 'Any', 'MaxReturnedDevices': '5000'}
 
-        result = cucm_risport_query(CM_CREDS, command, query)
+        result = cucm_ris_query(CM_CREDS, command, query)
 
         for device in all_devices:
             found_device = False
@@ -275,6 +271,7 @@ def cucm_fill_device_status(CM_CREDS, all_devices):
     except Exception as ex:
         print("cucm_fill_devices_status exception: ", ex)
         return None
+
 
 #################################################################################
 # Connect to CUCM PerfmonPort interface using SOAP
