@@ -91,7 +91,7 @@ try:
     fd_2.write("Total IP Phones = {}\n".format(all_devices_count[1]))
     fd_2.write("Total ATA Ports = {} (Devices = {})\n".format(all_devices_count[3], all_devices_count[2]))
     fd_2.write("Total Analog Ports = {}\n".format(all_devices_count[4]))
-    fd_2.write("Total Jabber Devices = {}\n".format(all_devices_count[5]))
+    # fd_2.write("Total Jabber Devices = {}\n".format(all_devices_count[5]))
 
     all_devices.sort(key=lambda x: x.timestamp, reverse=True)
     fd_2.write("\n\nUnregistered devices ({}):\n".format(unreg_devices))
