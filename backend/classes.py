@@ -20,6 +20,6 @@ class Phone:
                                                    self.alerting_name))
 
     def print_device_ris(self):
-        print("Device = {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.device_type, \
+        print("{}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.device_type, \
                                                            self.extension, self.alerting_name, self.status, \
                                                            self.timestamp))
