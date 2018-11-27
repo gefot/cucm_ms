@@ -36,9 +36,7 @@ start = datetime.datetime.now()
 # Get a list of and count all configured devices
 ########################################################################################################################
 try:
-    # all_devices = module_cucm_funcs.cucm_get_configured_devices(CM_PUB_CREDS)
     all_devices = module_cucm_funcs.cucm_get_configured_devices2(CM_PUB_CREDS)
-    # print(all_devices)
 except Exception as ex:
     print(ex)
     exit(0)
@@ -110,3 +108,7 @@ try:
 except Exception as ex:
     print(ex)
     exit(0)
+
+
+# Measure Script Execution
+print("\n--->Runtime at end = {} \n\n\n".format(datetime.datetime.now() - start))

@@ -46,15 +46,10 @@ start = datetime.datetime.now()
 # Get a list of and count all configured devices
 ########################################################################################################################
 try:
-    all_devices = module_cucm_funcs.cucm_get_configured_devices(CM_PUB_CREDS)
-    all_devices_count = module_cucm_funcs.cucm_count_interering_devices(all_devices)
+    all_devices = module_cucm_funcs.cucm_get_configured_devices2(CM_PUB_CREDS)
 except Exception as ex:
     print(ex)
     exit(0)
-
-# for device in all_devices:
-#     print(device)
-# print("device count = ", all_devices_count)
 
 # Measure Script Execution
 print("\n--->Runtime After AXLAPI SQL query = {} \n\n\n".format(datetime.datetime.now() - start))
@@ -68,7 +63,7 @@ try:
     conn = module_db_funcs.db_connect(DB_CREDS)
     cursor = conn.cursor()
     for device in all_devices:
-        my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_db_per_dn(cursor, device[2])
+        my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_authdb_per_dn(cursor, device[2])
         device.extend((my_username, my_unit_id, my_switchport, my_isPoE))
     conn.close()
 except Exception as ex:
