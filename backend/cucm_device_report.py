@@ -87,7 +87,7 @@ try:
             ignored_devices += 1
         if (not dev.description.startswith("_")) and dev.status == "unregistered":
             unreg_devices += 1
-    fd_2.write("Device Summary (Registered / Total: {} / {}\n\n".format(all_devices_count[0]-unreg_devices, all_devices_count[0]))
+    fd_2.write("Device Summary (Registered / Total):  {} / {}\n\n".format(all_devices_count[0]-unreg_devices, all_devices_count[0]))
     fd_2.write("Total IP Phones = {}\n".format(all_devices_count[1]))
     fd_2.write("Total ATA Ports = {} (Devices = {})\n".format(all_devices_count[3], all_devices_count[2]))
     fd_2.write("Total Analog Ports = {}\n".format(all_devices_count[4]))
@@ -97,8 +97,8 @@ try:
     fd_2.write("\n\nUnregistered devices ({}):\n".format(unreg_devices))
     for dev in all_devices:
         if (not dev.description.startswith("_")) and dev.status == "unregistered":
-            fd_2.write("{}, {}, {}, {}, {}, {}, {}\n".format(dev.name, dev.description, dev.device_type, dev.extension, \
-                                                             dev.alerting_name, dev.status, dev.timestamp))
+            fd_2.write("{}\t\t{}\t\t{}\t\t{}\t\t{}\n".format(dev.name, dev.extension, dev.timestamp, dev.description, \
+                                                             dev.alerting_name))
     fd_2.write("\n\nIgnored devices ({}):\n".format(ignored_devices))
     for dev in all_devices:
         if dev.description.startswith("_"):

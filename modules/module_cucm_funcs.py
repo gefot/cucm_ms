@@ -1,15 +1,15 @@
 
+import datetime
 import os
 import ssl
 from pathlib import Path
-import datetime
 
 from backend.classes import Phone
 
-from suds.xsd.doctor import Import  # suds-jurko
+from suds.xsd.doctor import Import          # suds-jurko
 from suds.xsd.doctor import ImportDoctor    # suds-jurko
-from suds.client import Client      # suds-jurko
-# from suds import WebFault         # suds-jurko
+from suds.client import Client              # suds-jurko
+# from suds import WebFault                 # suds-jurko
 
 
 ########################################################################################################################
@@ -179,6 +179,30 @@ def cucm_fill_device_status(CM_CREDS, all_devices):
 
     except Exception as ex:
         print("cucm_fill_devices_status exception: ", ex)
+        return None
+
+
+def cucm_get_translation_patterns(CM_CREDS):
+    """
+    :param CM_CREDS: CUCM Credentials
+    :return: list of all CUCM translation patterns
+    """
+    try:
+        sql_query = "select n.dnorpattern, n.calledpartytransformationmask from numplan n where n.calledpartytransformationmask <> ''"
+
+        result = cucm_axl_query(CM_CREDS, "executeSQLQuery", sql_query)
+        # print(result)
+
+        translation_list = result[1]['return'].row
+        translation_patterns = {}
+        for xlation in translation_list:
+            # translation_patterns[xlation.dnorpattern] = xlation.calledpartytransformationmask
+            translation_patterns[str(xlation.calledpartytransformationmask)] = str(xlation.dnorpattern)
+
+        return translation_patterns
+
+    except Exception as ex:
+        print("cucm_get_translation_patterns exception: ", ex)
         return None
 
 

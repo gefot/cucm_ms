@@ -1,3 +1,4 @@
+
 class Phone:
 
     def __init__(self, name, description, device_type, extension, alerting_name):
@@ -10,10 +11,10 @@ class Phone:
         self.device_type = device_type
         self.extension = extension
         self.alerting_name = alerting_name
-        self.status = None
-        self.timestamp = None
-        self.switchport = None
-        self.responsible_person = None
+        self.status = ""
+        self.timestamp = ""
+        self.switchport = ""
+        self.responsible_person = ""
 
     def print_device_axl(self):
         print("{}, {}, {}, {}, {}".format(self.name, self.description, self.device_type, self.extension, \
@@ -23,3 +24,7 @@ class Phone:
         print("{}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.device_type, \
                                                            self.extension, self.alerting_name, self.status, \
                                                            self.timestamp))
+    def print_device_full(self):
+        print("{}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.device_type, \
+                                                          self.extension, self.alerting_name, self.status, \
+                                                          self.timestamp, self.switchport, self.responsible_person))

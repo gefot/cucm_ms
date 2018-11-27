@@ -39,6 +39,14 @@ SW_CREDS = {'my_connection_type': str(data["switch"]["device_connection_type"]),
             'sw_verbose': str(data["switch"]["sw_verbose"])
             }
 
+RT_CREDS = {'my_connection_type': str(data["router"]["device_connection_type"]), \
+            'sw_username': str(data["router"]["sw_username"]), \
+            'sw_password': str(data["router"]["sw_password"]), \
+            'sw_enable': str(data["router"]["sw_enable"]), \
+            'sw_port': str(data["router"]["sw_port"]), \
+            'sw_verbose': str(data["router"]["sw_verbose"])
+            }
+
 
 ################################################################################
 start = datetime.datetime.now()
@@ -55,6 +63,23 @@ except Exception as ex:
 
 # Measure Script Execution
 print("\n--->Runtime After AXLAPI SQL query = {} \n\n\n".format(datetime.datetime.now() - start))
+
+
+########################################################################################################################
+# Replace 3-digit internal extensions with the corresponding translation patterns
+########################################################################################################################
+try:
+    xlation_patterns = module_cucm_funcs.cucm_get_translation_patterns(CM_PUB_CREDS)
+    # print(xlation_patterns)
+    for dev in all_devices:
+        try:
+            if len(dev.extension) == 3:
+                dev.extension = xlation_patterns[dev.extension]
+        except:
+            continue
+except Exception as ex:
+    print(ex)
+    exit(0)
 
 
 ########################################################################################################################
@@ -77,8 +102,8 @@ except Exception as ex:
 # Measure Script Execution
 print("\n--->Runtime After DB Queries = {} \n\n\n".format(datetime.datetime.now()-start))
 
-# for dev in all_devices:
-#     dev.print_device_axl()
+for dev in all_devices:
+    dev.print_device_full()
 
 
 ########################################################################################################################
@@ -93,6 +118,7 @@ try:
     print(switch_list)
     # switch_list = ["bld67cbsmnt-sw", "bld34fl02-sw", "bld61fl00-sw"]
     switch_list = ["bld34fl02-sw"]
+    switch_list = ["noc-clust-sw"]
 
     switch_devices_table = []
     voice_vlan_mac_table = []
@@ -100,7 +126,11 @@ try:
     for sw_device in switch_list:
         print("\nConnecting to switch: ", sw_device)
 
-        conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+        if sw_device == "noc-clust-sw":
+            conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
+        else:
+            conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+
         modules = module_network_device_funcs.get_cluster_members(conn)
 
         for module in modules:
@@ -145,19 +175,15 @@ print("\n--->Runtime After Accessing Switches = {} \n\n\n".format(datetime.datet
 # Sanity Check
 excluded_extensions = ['']
 # excluded_extensions = ['99999']   # Exclude these extensions from the check
-print("\n\n\n\n\n")
 try:
     sanity_body = ""
     for my_device1 in all_devices:
         for my_device2 in switch_devices_table:
             try:
                 if my_device1.name == my_device2[0] and my_device1.extension not in excluded_extensions:      # MAC match check
-                    print(my_device1.name, my_device2[0])
                     if my_device1.switchport == my_device2[1]:  # switch port check
-                        print(my_device1.switchport, my_device2[1])
                         pass
                     else:
-                        print(my_device1.switchport, my_device2[1])
                         sanity_text = "Mismatch: Extension %s (Device %s) found at switchport %s but is actually declared at %s\n" \
                                       % (my_device1.extension, my_device1.mac, my_device2[1], my_device1.switchport)
                         sanity_body += sanity_text
@@ -215,7 +241,6 @@ Security check:
 print(mail_body)
 
 if sanity_body or security_body:
-    print("\n\n", mail_body)
     target = open(MAIL_FILE, "w")
     target.write(mail_body)
     target.close()
