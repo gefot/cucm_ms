@@ -132,9 +132,9 @@ def cucm_count_interering_devices(devices):
                 device_count[0] += 1
                 device_count[1] += 1
             elif device.name.startswith("ATA"):
+                device_count[0] += 1
                 device_count[3] += 1        # ATA port count
                 if not device.name.endswith("01"):
-                    device_count[0] += 1
                     device_count[2] += 1    # ATA device count
             elif device.name.startswith("AN") or device.name.startswith("AALN"):
                 device_count[0] += 1
