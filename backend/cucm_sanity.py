@@ -117,8 +117,8 @@ try:
     fd.close()
     print(switch_list)
     # switch_list = ["bld67cbsmnt-sw", "bld34fl02-sw", "bld61fl00-sw"]
-    switch_list = ["bld34fl02-sw"]
-    switch_list = ["noc-clust-sw"]
+    # switch_list = ["noc-clust-sw"]
+    switch_list = ["bld34fl02-sw", "noc-clust-sw", "bld61fl00-sw", "bld67cbsmnt-sw"]
 
     switch_devices_table = []
     voice_vlan_mac_table = []
@@ -174,7 +174,7 @@ print("\n--->Runtime After Accessing Switches = {} \n\n\n".format(datetime.datet
 ########################################################################################################################
 # Sanity Check
 excluded_extensions = ['']
-# excluded_extensions = ['99999']   # Exclude these extensions from the check
+excluded_extensions = ['99999']   # Exclude these extensions from the check
 try:
     sanity_body = ""
     for my_device1 in all_devices:
@@ -184,9 +184,10 @@ try:
                     if my_device1.switchport == my_device2[1]:  # switch port check
                         pass
                     else:
-                        sanity_text = "Mismatch: Extension %s (Device %s) found at switchport %s but is actually declared at %s\n" \
-                                      % (my_device1.extension, my_device1.mac, my_device2[1], my_device1.switchport)
-                        sanity_body += sanity_text
+                        if not my_device1.mac.startswith('34DBFD'):         # Exclude ATAs fro checks
+                            sanity_text = "Mismatch: Extension %s (Device %s) found at switchport %s but is actually declared at %s\n" \
+                                          % (my_device1.extension, my_device1.mac, my_device2[1], my_device1.switchport)
+                            sanity_body += sanity_text
                 else:
                     continue
             except Exception as ex:
@@ -201,8 +202,8 @@ except Exception as ex:
 
 # Security Check
 excluded_macs = ['']
-# Excluded MACs: cvoice-rc-gw, 5x RC IP Phones registered at the old CUCM
-# excluded_macs = ['C89C1DA33D1E', 'C89C1D492B50', '001D70616E00', '503DE57D415E', '503DE5E93C10', '503DE5E947B1']
+# Excluded MACs: cvoice-rc-gw, 5x RC IP Phones registered at the old CUCM, old CUCMs
+excluded_macs = ['C89C1D492B50', '000C2905DB8B', '000C291D59FB', '000C2950DF27', '000C31E9F121', 'C89C1D893390', 'E41F13252289', 'E41F1325280B']
 
 security_body = ""
 for mac in voice_vlan_mac_table:
