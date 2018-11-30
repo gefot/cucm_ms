@@ -173,7 +173,7 @@ print("\n--->Runtime After Accessing Switches = {} \n\n\n".format(datetime.datet
 # voice_vlan_mac_table: [vlan, MAC address, switchport]
 ########################################################################################################################
 # Sanity Check
-excluded_extensions = ['']
+# excluded_extensions = ['']
 excluded_extensions = ['99999']   # Exclude these extensions from the check
 try:
     sanity_body = ""
@@ -201,8 +201,8 @@ except Exception as ex:
 
 
 # Security Check
-excluded_macs = ['']
 # Excluded MACs: cvoice-rc-gw, 5x RC IP Phones registered at the old CUCM, old CUCMs
+excluded_macs = ['']
 excluded_macs = ['C89C1D492B50', '000C2905DB8B', '000C291D59FB', '000C2950DF27', '000C31E9F121', 'C89C1D893390', 'E41F13252289', 'E41F1325280B']
 
 security_body = ""
