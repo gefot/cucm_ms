@@ -25,7 +25,7 @@ def device_connect(my_device, SW_CREDS):
 
 
 ########################################################################################################################
-def get_cluster_members(conn):
+def get_cisco_cluster_members(conn):
     """
     :param conn: switch connector
     :return: list of switch cluster members, eg [0,1,2,3] or ['0'] if none
@@ -47,7 +47,7 @@ def get_cluster_members(conn):
         return modules
 
     except Exception as ex:
-        print("get_cluster_members exception: ", ex.message)
+        print("get_cisco_cluster_members exception: ", ex.message)
 
 
 ########################################################################################################################
@@ -95,26 +95,28 @@ def device_show_cmd(conn, command, module):
 
 
 ########################################################################################################################
-def get_switch_trunk_ports(connection, module):
+def get_switch_trunk_ports(connection, device_model, module):
     """
     :param connection: switch connector
     :param module: cluster member number
     :return: trunk interface list, eg. ['Fa0/1', 'Gi0/2']
     """
     try:
-        trunk_ports = []
+        # Cisco
+        if re.search('WS-C', device_model):
+            trunk_ports = []
 
-        command = "show interface trunk"
-        result = device_show_cmd(connection, command, module)
-        trunk_ints = re.split('\n', result)
+            command = "show interface trunk"
+            result = device_show_cmd(connection, command, module)
+            trunk_ints = re.split('\n', result)
 
-        for trunk in trunk_ints:
-            try:
-                trunk_port = re.search(r'([\w\d\/]+).*trunking', trunk)
-                trunk_port = trunk_port.group(1)
-                trunk_ports.append(trunk_port)
-            except:
-                pass
+            for trunk in trunk_ints:
+                try:
+                    trunk_port = re.search(r'([FGT][aie][\d|\/]+).*trunking', trunk)
+                    trunk_port = trunk_port.group(1)
+                    trunk_ports.append(trunk_port)
+                except:
+                    pass
 
         return trunk_ports
 
@@ -131,31 +133,33 @@ def get_switch_mac_table(connection, device_model, module):
     :return: [vlan, mac address, port]
     """
     try:
-        if re.search('WS-C2950', device_model):
-            command = "show mac-address-table"
-        elif re.search('WS-C2960', device_model):
-            command = "show mac address-table"
-        else:
-            command = "show mac address-table"
+        # Cisco
+        if re.search('WS-C', device_model):
+            if re.search('WS-C2950', device_model):
+                command = "show mac-address-table"
+            else:
+                command = "show mac address-table"
 
-        result = device_show_cmd(connection, command, module)
-        mac_entries = re.split('\n', result)
+            result = device_show_cmd(connection, command, module)
+            mac_entries = re.split('\n', result)
 
-        trunk_ports = get_switch_trunk_ports(connection, module)
+            trunk_ports = get_switch_trunk_ports(connection, device_model, module)
 
-        mac_entry_list = []
-        for mac_entry in mac_entries:
-            try:
-                my_port = re.search(r'.*([FG][ai][\d|\/]+)', mac_entry).group(1)
-                if my_port not in trunk_ports:
-                    entry = re.search(r'(\d+)\s+([\w\d]+\.[\w\d]+\.[\w\d]+)[\w\d\s]+[FG][ai].*\/(\d+)', mac_entry)
-                    vlan = entry.group(1)
-                    mac = entry.group(2)
-                    port = entry.group(3)
-                    mac_entry_list.append([vlan, mac, port])
+            mac_entry_list = []
+            for mac_entry in mac_entries:
+                try:
+                    my_port = re.search(r'.*([FGT][aie][\d|\/]+)', mac_entry).group(1)
+                    if my_port not in trunk_ports:
+                        print(mac_entry)
+                        entry = re.search(r'(\d+)\s+([\w\d]+\.[\w\d]+\.[\w\d]+)[\w\d\s]+[FG][ai].*\/(\d+)', mac_entry)
+                        vlan = entry.group(1)
+                        mac = entry.group(2)
+                        port = entry.group(3)
+                        mac_entry_list.append([vlan, mac, port])
 
-            except:
-                pass
+                except:
+                    pass
+
 
         return mac_entry_list
 

@@ -12,7 +12,8 @@ REPORT_FILE_1 = '../data/output/report_devices.txt'
 REPORT_FILE_2 = '../data/output/report_devices_unregistered.txt'
 
 # data = json.load(open('/home/pbx/cucm_ms/data/access.json'))  # Linux
-# DEVICE_REPORT_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/device_report.txt'
+#REPORT_FILE_1 = '../data/output/report_devices.txt'            #FIX
+#REPORT_FILE_2 = '../data/output/report_devices_unregistered.txt'
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'cm_server_ip_address': str(data["cucm"]["pub_ip_address"]), \

@@ -131,7 +131,7 @@ try:
         else:
             conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
 
-        modules = module_network_device_funcs.get_cluster_members(conn)
+        modules = module_network_device_funcs.get_cisco_cluster_members(conn)
 
         for module in modules:
             # Run 'show cdp neighbors' and get device and switchport

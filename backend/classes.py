@@ -1,20 +1,30 @@
 
 class Phone:
 
-    def __init__(self, name, description, device_type, extension, alerting_name):
+    def __init__(self, name, description, extension, alerting_name):
+        # AXL
         self.name = name
         if name.startswith('SEP') or name.startswith('ATA'):
             self.mac = name[3:]
         else:
-            self.mac = ''
+            self.mac = 'unknown'
         self.description = description
-        self.device_type = device_type
         self.extension = extension
         self.alerting_name = alerting_name
-        self.status = ""
-        self.timestamp = ""
-        self.switchport = ""
-        self.responsible_person = ""
+        self.device_type = "unknown"
+
+        # RIS
+        self.status = "unknown"
+        self.timestamp = "unknown"
+
+        # Networking
+        self.switchport = "unknown"
+        self.switchport_status = "unknown"
+        self.switchport_power = "unknown"
+        self.switchport_cabling = "unknown"
+        self.switchport_found_mac = "unknown"
+        self.responsible_person = "unknown"
+
 
     def print_device_axl(self):
         print("{}, {}, {}, {}, {}".format(self.name, self.description, self.device_type, self.extension, \

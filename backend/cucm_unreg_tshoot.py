@@ -1,10 +1,153 @@
 
+import json
+import datetime
+import re
+
+from backend.classes import Phone
+from modules import module_cucm_funcs, module_db_funcs, module_network_device_funcs
 
 
+########################################################################################################################
+# Constant Variables
+########################################################################################################################
+data = json.load(open('../data/access.json'))
+
+UNREG_REPORT_FILE = '../data/output/report_devices_unregistered.txt'
+
+# data = json.load(open('/home/pbx/cucm_ms/data/access.json'))  # Linux
+# DEVICE_REPORT_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/device_report.txt'
+
+CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
+                'cm_server_ip_address': str(data["cucm"]["pub_ip_address"]), \
+                'cm_server_port': str(data["cucm"]["cm_port"]), \
+                'soap_user': str(data["cucm"]["soap_user"]), \
+                'soap_pass': str(data["cucm"]["soap_pass"])
+                }
+
+DB_CREDS = {'db_host': str(data["db1"]["db_host"]), \
+            'db_username': str(data["db1"]["db_username"]), \
+            'db_password': str(data["db1"]["db_password"]), \
+            'db_name': str(data["db1"]["db_name"])
+            }
+
+SW_CREDS = {'my_connection_type': str(data["switch"]["device_connection_type"]), \
+            'sw_username': str(data["switch"]["sw_username"]), \
+            'sw_password': str(data["switch"]["sw_password"]), \
+            'sw_enable': str(data["switch"]["sw_enable"]), \
+            'sw_port': str(data["switch"]["sw_port"]), \
+            'sw_verbose': str(data["switch"]["sw_verbose"])
+            }
+
+RT_CREDS = {'my_connection_type': str(data["router"]["device_connection_type"]), \
+            'sw_username': str(data["router"]["sw_username"]), \
+            'sw_password': str(data["router"]["sw_password"]), \
+            'sw_enable': str(data["router"]["sw_enable"]), \
+            'sw_port': str(data["router"]["sw_port"]), \
+            'sw_verbose': str(data["router"]["sw_verbose"])
+            }
+
+
+########################################################################################################################
+start = datetime.datetime.now()
+
+
+########################################################################################################################
+# Get unregistered devices from device report
+# Construct a Phone list with name, description, extension, calling_name
+########################################################################################################################
+unreg_devices = []
+try:
+    fd = open(UNREG_REPORT_FILE, "r")
+    for line in fd:
+        if "Unregistered devices" in line:
+            new_line = fd.readline().strip('\n')
+            while new_line is not '':
+                # print(repr(new_line))
+                device = new_line.split('\t\t')
+                # print("device=",device)
+                temp_dev = Phone(device[0], device[3], device[1], device[4])
+                unreg_devices.append(temp_dev)
+                new_line = fd.readline().strip('\n')
+    fd.close()
+except:
+    exit(0)
+
+
+########################################################################################################################
+# Replace 3-digit internal extensions with the corresponding translation patterns
+########################################################################################################################
+# try:
+#     xlation_patterns = module_cucm_funcs.cucm_get_translation_patterns(CM_PUB_CREDS)
+#     # print(xlation_patterns)
+#     for dev in unreg_devices:
+#         try:
+#             if len(dev.extension) == 3:
+#                 dev.extension = xlation_patterns[dev.extension]
+#         except:
+#             continue
+# except Exception as ex:
+#     print(ex)
+#     exit(0)
+
+
+########################################################################################################################
+# Fill in all_devices with database info
+########################################################################################################################
+try:
+    conn = module_db_funcs.db_connect(DB_CREDS)
+    cursor = conn.cursor()
+    for dev in unreg_devices:
+        my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_authdb_per_dn(cursor, dev.extension)
+        dev.responsible_person = my_username
+        dev.switchport = my_switchport
+    conn.close()
+except Exception as ex:
+    print(ex)
+    conn.close()
+    exit(0)
+
+
+# for dev in unreg_devices:
+#     dev.print_device_full()
+
+# Measure Script Execution
+print("\n--->Runtime After database SQL query = {} \n\n\n".format(datetime.datetime.now() - start))
 
 ########################################################################################################################
 # Troubleshooting Section
 ########################################################################################################################
+try:
+    for dev in unreg_devices:
+        dev.print_device_full()
+        try:
+            if dev.switchport != "unknown":
+                m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d)", dev.switchport)
+                sw_device = m.group(1)
+                module = m.group(2)
+                port = m.group(3)
+
+                if sw_device == "noc-clust-sw":
+                    conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
+                else:
+                    # conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+                    conn = module_network_device_funcs.device_connect("bld67cbsmnt-sw", SW_CREDS)
+                    print("\n--->Runtime = {} \n\n\n".format(datetime.datetime.now() - start))
+
+                    device_model = module_network_device_funcs.get_device_model(conn, "0")
+                    print(device_model)
+                    print("\n--->Runtime = {} \n\n\n".format(datetime.datetime.now() - start))
+
+                    macs = module_network_device_funcs.get_switch_mac_table(conn, device_model, "0")
+                    print(macs)
+                    print("\n--->Runtime = {} \n\n\n".format(datetime.datetime.now() - start))
+
+                # modules = module_network_device_funcs.get_cisco_cluster_members(conn)
+        except:
+            continue
+except Exception as ex:
+    print(ex)
+    exit(0)
+
 # device_model = []
 # port_status = []
 # port_power = []
@@ -15,19 +158,6 @@
 # 	for i,device in enumerate(unreg_devices):
 # 		#print "device = ",device
 # 		try:
-# 			if (switchport[i] == "unknown"):
-# 				print "->Not trying any device"
-# 				device_model.append("unknown")
-# 				port_status.append("unknown")
-# 				port_power.append("unknown")
-# 				port_tdr.append("unknown")
-# 				found_mac.append("unknown")
-# 			else:
-# 				sw_device = switchport[i][0]
-# 				module = str(int(switchport[i][1]))
-# 				port = str(int(switchport[i][2]))
-# 				#print sw_device,module,port
-#
 # 				print "->Trying switch: ",sw_device
 # 				conn = MOD_device_funcs.device_connect(sw_connection_type,sw_device,sw_username,sw_password,sw_enable,sw_port,sw_verbose)
 #
@@ -164,3 +294,6 @@
 # print "\n\n--->Runtime final = ",datetime.datetime.now()-start
 #
 #
+
+# Measure Script Execution
+print("\n--->Runtime final = {} \n\n\n".format(datetime.datetime.now()-start))

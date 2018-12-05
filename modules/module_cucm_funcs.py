@@ -107,7 +107,8 @@ def cucm_get_configured_devices(CM_CREDS):
         for dev in device_list_full_axl:
             # if dev.name.startswith(("SEP", "ATA", "AALN", "AN", "CSF")):
             if dev.name.startswith(("SEP", "ATA", "AALN", "AN")):
-                temp_dev = Phone(str(dev.name), str(dev.description), str(dev.type), str(dev.dnorpattern), str(dev.alertingname))
+                temp_dev = Phone(str(dev.name), str(dev.description), str(dev.dnorpattern), str(dev.alertingname))
+                temp_dev.device_type = str(dev.type)
                 all_configured_devices.append(temp_dev)
             else:
                 continue
@@ -183,6 +184,7 @@ def cucm_fill_device_status(CM_CREDS, all_devices):
         return None
 
 
+########################################################################################################################
 def cucm_get_translation_patterns(CM_CREDS):
     """
     :param CM_CREDS: CUCM Credentials
