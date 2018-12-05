@@ -58,6 +58,7 @@ def get_device_model(conn, module):
     :return: device model (eg. WS-C2950C-24)
     """
     try:
+        # Cisco
         command = "show version"
         result = device_show_cmd(conn, command, module)
 
@@ -118,6 +119,7 @@ def get_switch_trunk_ports(connection, device_model, module):
                 except:
                     pass
 
+
         return trunk_ports
 
     except Exception as ex:
@@ -128,7 +130,7 @@ def get_switch_trunk_ports(connection, device_model, module):
 def get_switch_mac_table(connection, device_model, module):
     """
     :param connection: switch connector
-    :param device_model: switch model (because show mac address-table is differentiated)
+    :param device_model: switch model
     :param module: cluster member number
     :return: [vlan, mac address, port]
     """
@@ -156,7 +158,6 @@ def get_switch_mac_table(connection, device_model, module):
                         mac = entry.group(2)
                         port = entry.group(3)
                         mac_entry_list.append([vlan, mac, port])
-
                 except:
                     pass
 
@@ -168,91 +169,129 @@ def get_switch_mac_table(connection, device_model, module):
 
 
 ########################################################################################################################
-# # Get port label for a device; eg. Gi/Fe 0/x
-# def get_port_label(connection, device_model, module):
-# 	try:
-# 		if re.search('WS-C2960X',device_model) or re.search('WS-C2960S',device_model) or re.search('WS-C2960G',device_model):
-# 			port_label = "Gi1/0/"
-# 		elif re.search('WS-C2960',device_model):
-# 			port_label = "Fa0/"
-# 		elif re.search('WS-C2950',device_model):
-# 			port_label = "Fa0/"
-#
-# 		return port_label
-#
-# 	except Exception as e:
-# 		print "Exception:",e.message
-# 		raise RuntimeError("Could not get port label")
-#
-#
-# #####################################################################
-# # Return port status (up/down) for a specific port
-# def get_port_status(connection, device_model, module, port_label, port):
-# 	try:
-# 		command = "show int "+port_label+port
-# 		result = device_show_cmd(connection,command,module)
-#
-# 		if re.findall("line protocol is up",result):
-# 			port_status = "up"
-# 		elif re.findall("line protocol is down",result):
-# 			port_status = "down"
-#
-# 		return port_status
-#
-# 	except Exception as e:
-# 		print "Exception:",e.message
-# 		raise RuntimeError("Could not get port status")
-#
-#
+def get_port_label(device_model):
+    """
+    :param device_model: device model
+    :return: the preceding port label (eg. "Fa0/")depending on switch model
+    """
+    try:
+        # Cisco
+        if re.search('WS-C', device_model):
+            if re.search('WS-C2960X',device_model) or re.search('WS-C2960S',device_model):
+                port_label = "Gi1/0/"
+            elif re.search('WS-C2960G',device_model):
+                port_label = "Gi0/"
+            elif re.search('WS-C2960-',device_model) or re.search('WS-C2960\+',device_model):
+                port_label = "Fa0/"
+            elif re.search('WS-C2950',device_model):
+                port_label = "Fa0/"
+            else:
+                port_label = "Fa0/"
+
+        return port_label
+
+    except Exception as ex:
+        print("get_port_label exception: ", ex.message)
+
+
 ########################################################################################################################
-# # Return output of "show power inline" for a specific port
-# def get_port_power(connection, device_model, module, port_label, port):
-# 	try:
-# 		if re.search('WS-C.*[PL]C',device_model):
-# 			command = "show power inline | include "+port_label+port
-# 			result = device_show_cmd(connection,command,module)
-#
-# 			power_output = re.split(" {2,}",result)
-# 			if power_output[2] == "off":
-# 				port_power = "PoE Port - Off"
-# 			elif power_output[2] == "on":
-# 				if power_output[4] == "Ieee PD":
-# 					port_power = "PoE Port - Ieee PD"
-# 				elif re.search('IP Phone',power_output[4]):
-# 					port_power = "PoE Port - IP Phone"
-# 				else:
-# 					port_power = "PoE Port - No Power"
-# 		else:
-# 			port_power = "PoE Injector"
-#
-# 		return port_power
-#
-# 	except Exception as e:
-# 		print "Exception:",e.message
-# 		raise RuntimeError("Could not get port power")
-#
-#
+def get_port_status(connection, device_model, module, port):
+    """
+    :param connection: switch connector
+    :param device_model: switch model
+    :param module: cluster member number
+    :param port: port number
+    :return: port status (up/down)
+    """
+    try:
+        # Cisco
+        if re.search('WS-C', device_model):
+            port_label = get_port_label(device_model)
+
+            command = "show int " + port_label + port
+            result = device_show_cmd(connection, command, module)
+
+            if re.findall("line protocol is up", result):
+                port_status = "up"
+            elif re.findall("line protocol is down", result):
+                port_status = "down"
+
+
+        return port_status
+
+    except Exception as ex:
+        print("get_port_status exception: ", ex.message)
+
+
+#######################################################################################################################
+def get_port_power_status(connection, device_model, module, port):
+    """
+    :param connection: switch connector
+    :param device_model: switch model
+    :param module: cluster member number
+    :param port: port number
+    :return: port power status
+    """
+    try:
+        # Cisco
+        if re.search('WS-C', device_model):
+            port_label = get_port_label(device_model)
+
+            if re.search('WS-C.*[PL]C',device_model):
+                command = "show power inline | include " + port_label + port
+                result = device_show_cmd(connection, command, module)
+                print(result)
+
+                power_output = re.split(" {2,}", result)
+                if power_output[2] == "off":
+                    port_power = "PoE Port - Off"
+                elif power_output[2] == "on":
+                    if power_output[4] == "Ieee PD":
+                        port_power = "PoE Port - Ieee PD - " + power_output[6]
+                    elif re.search('IP Phone', power_output[4]):
+                        port_power = "PoE Port - IP Phone - " + power_output[6] + "W"
+                    else:
+                        port_power = "PoE Port - No Power"
+            else:
+                port_power = "PoE Injector"
+
+
+        return port_power
+
+    except Exception as ex:
+        print("get_port_power exception: ", ex.message)
+
 ########################################################################################################################
-# # Return TDR results for a specific port
-# def get_port_tdr(connection, device_model, module, port_label, port):
-# 	try:
-# 		if re.search('WS-C2960',device_model):
-# 			command = "test cable-diagnostics tdr interface "+port_label+port
-# 			result = device_show_cmd(connection,command,module)
-# 			time.sleep(1)
-# 			command = "show cable-diagnostics tdr interface "+port_label+port
-# 			result = device_show_cmd(connection,command,module)
-# 			port_tdr = re.search(r'(Fa|Gi)[\w\d\/\s\+\-]*',result).group()
-# 		else:
-# 			port_tdr = "Not Supported"
-#
-# 		return port_tdr
-#
-# 	except Exception as e:
-# 		print "Exception:",e.message
-# 		raise RuntimeError("Could not get port TDR")
-#
-#
+def get_port_cabling(connection, device_model, module, port):
+    """
+    :param connection: switch connector
+    :param device_model: switch model
+    :param module: cluster member number
+    :param port: port number
+    :return: cabling diagnostics
+    """
+    try:
+        # Cisco
+        if re.search('WS-C', device_model):
+            port_label = get_port_label(device_model)
+
+            if re.search('WS-C2960',device_model):
+                command = "test cable-diagnostics tdr interface " + port_label + port
+                result = device_show_cmd(connection, command, module)
+                time.sleep(1)
+                command = "show cable-diagnostics tdr interface "+port_label+port
+                result = device_show_cmd(connection, command, module)
+                port_cabling = re.search(r'(Fa|Gi)[\w\d\/\s\+\-]*',result).group()
+            else:
+                port_cabling = "Not Supported"
+
+
+        return port_cabling
+
+    except Exception as ex:
+        print("get_port_cabling exception: ", ex.message)
+
+
 ########################################################################################################################
 # # Return a list of MAC addresses for a specific port
 # def get_port_macs(connection, device_model, module, port_label, port):
@@ -275,58 +314,3 @@ def get_switch_mac_table(connection, device_model, module):
 #
 #
 
-########################################################################################################################
-# def tshoot_ipphone(conn,switchport,mac_address):
-#
-# 	try:
-# 		if (switchport == "unknown"):
-# 			#print "->Not trying any device"
-# 			device_model = "unknown"
-# 			port_status = "unknown"
-# 			port_power = "unknown"
-# 			port_tdr = "unknown"
-# 			found_mac = "unknown"
-# 		else:
-# 			sw_device = switchport[0]
-# 			module = str(int(switchport[1]))
-# 			port = str(int(switchport[2]))
-# 			#print sw_device,module,port
-#
-# 			#print "->Trying switch: ",sw_device
-# 			my_device_model = get_device_model(conn, module)
-# 			port_label = get_port_label(conn, my_device_model, module)
-# 			my_port_status = get_port_status(conn, my_device_model, module, port_label, port)
-# 			my_port_power = get_port_power(conn, my_device_model, module, port_label, port)
-# 			my_port_tdr = get_port_tdr(conn, my_device_model, module, port_label, port)
-# 			my_port_macs = get_port_macs(conn, my_device_model, module, port_label, port)
-#
-# 			#print my_device_model, port_label, my_port_status, my_port_power, my_port_tdr, my_port_macs
-#
-# 			conn.disconnect()
-#
-# 			# Check if port_macs contains MAC address
-# 			#print "my_port_macs =",my_port_macs
-# 			if my_port_macs:
-# 				found = False
-# 				for my_mac in my_port_macs:
-# 					mac = "SEP"+(my_mac.replace('.','')).upper()
-# 					if found == False and mac == mac_address:
-# 						found = True
-#
-# 				if found == True:
-# 					my_found_mac = "Yes"
-# 				else:
-# 					my_found_mac = "No"
-# 			else:
-# 				my_found_mac = "No"
-#
-# 			my_shoot_str = [my_device_model, my_port_status, my_port_power, my_port_tdr, my_found_mac]
-#
-# 			return my_shoot_str
-#
-# 	except Exception as e:
-# 		print "Exception:",e.message
-# 		return ["unknown", "unknown","unknown","unknown","unknown"]
-#
-#
-########################################################################################################################

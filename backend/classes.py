@@ -17,24 +17,29 @@ class Phone:
         self.status = "unknown"
         self.timestamp = "unknown"
 
+        # DB
+        self.responsible_person = "unknown"
+
         # Networking
         self.switchport = "unknown"
         self.switchport_status = "unknown"
-        self.switchport_power = "unknown"
+        self.switchport_power_status = "unknown"
         self.switchport_cabling = "unknown"
         self.switchport_found_mac = "unknown"
-        self.responsible_person = "unknown"
 
 
     def print_device_axl(self):
-        print("{}, {}, {}, {}, {}".format(self.name, self.description, self.device_type, self.extension, \
-                                                   self.alerting_name))
+        print("{}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, self.device_type))
 
     def print_device_ris(self):
-        print("{}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.device_type, \
-                                                           self.extension, self.alerting_name, self.status, \
-                                                           self.timestamp))
+        print("{}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, self.device_type, \
+                                                  self.status, self.timestamp))
     def print_device_full(self):
-        print("{}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.device_type, \
-                                                          self.extension, self.alerting_name, self.status, \
-                                                          self.timestamp, self.switchport, self.responsible_person))
+        print("{}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, self.device_type, \
+                                                          self.status, self.timestamp, self.responsible_person, \
+                                                          self.switchport))
+
+    def print_device_full_net(self):
+        print("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, self.device_type, \
+                                                          self.status, self.timestamp, self.responsible_person, \
+                                                          self.switchport, self.switchport_status, self.switchport_power_status, self.switchport_cabling, self.switchport_found_mac))

@@ -107,11 +107,9 @@ except Exception as ex:
     exit(0)
 
 
-# for dev in unreg_devices:
-#     dev.print_device_full()
-
 # Measure Script Execution
 print("\n--->Runtime After database SQL query = {} \n\n\n".format(datetime.datetime.now() - start))
+
 
 ########################################################################################################################
 # Troubleshooting Section
@@ -119,34 +117,44 @@ print("\n--->Runtime After database SQL query = {} \n\n\n".format(datetime.datet
 try:
     for dev in unreg_devices:
         dev.print_device_full()
+        print("--->Runtime = {}".format(datetime.datetime.now() - start))
+
         try:
             if dev.switchport != "unknown":
                 m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d)", dev.switchport)
                 sw_device = m.group(1)
                 module = m.group(2)
                 port = m.group(3)
+                print(sw_device)
 
                 if sw_device == "noc-clust-sw":
                     conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
                 else:
-                    # conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
-                    conn = module_network_device_funcs.device_connect("bld67cbsmnt-sw", SW_CREDS)
-                    print("\n--->Runtime = {} \n\n\n".format(datetime.datetime.now() - start))
+                    conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
 
-                    device_model = module_network_device_funcs.get_device_model(conn, "0")
-                    print(device_model)
-                    print("\n--->Runtime = {} \n\n\n".format(datetime.datetime.now() - start))
+                device_model = module_network_device_funcs.get_device_model(conn, module)
+                # print(device_model)
+                port_status = module_network_device_funcs.get_port_status(conn, device_model, module, port)
+                # print(port_status)
+                port_power_status = module_network_device_funcs.get_port_power_status(conn, device_model, module, port)
+                # print(port_power_status)
+                port_cabling_status = module_network_device_funcs.get_port_cabling(conn, device_model, module, "5")
+                # print(port_cabling_status)
 
-                    macs = module_network_device_funcs.get_switch_mac_table(conn, device_model, "0")
-                    print(macs)
-                    print("\n--->Runtime = {} \n\n\n".format(datetime.datetime.now() - start))
+                dev.switchport_status = port_status
+                dev.switchport_power_status = port_power_status
+                dev.switchport_cabling = port_cabling_status
 
-                # modules = module_network_device_funcs.get_cisco_cluster_members(conn)
         except:
             continue
 except Exception as ex:
     print(ex)
     exit(0)
+
+
+
+for dev in unreg_devices:
+    dev.print_device_full_net()
 
 # device_model = []
 # port_status = []
