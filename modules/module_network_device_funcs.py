@@ -240,7 +240,6 @@ def get_port_power_status(connection, device_model, module, port):
             if re.search('WS-C.*[PL]C',device_model):
                 command = "show power inline | include " + port_label + port
                 result = device_show_cmd(connection, command, module)
-                print(result)
 
                 power_output = re.split(" {2,}", result)
                 if power_output[2] == "off":
@@ -294,23 +293,31 @@ def get_port_cabling(connection, device_model, module, port):
 
 ########################################################################################################################
 # # Return a list of MAC addresses for a specific port
-# def get_port_macs(connection, device_model, module, port_label, port):
-# 	try:
-# 		if re.search('WS-C2950',device_model):
-# 			command = "show mac-address-table interface "+port_label+port
-# 		elif re.search('WS-C2960',device_model):
-# 			command = "show mac address-table interface "+port_label+port
-# 		else:
-# 			command = "show mac address-table interface "+port_label+port
-#
-# 		result = device_show_cmd(connection,command,module)
-# 		macs = re.findall("[\w\d]+\.[\w\d]+\.[\w\d]+",result)
-#
-# 		return macs
-#
-# 	except Exception as e:
-# 		print "-8.Exception:",e.message
-# 		raise RuntimeError("Could not get MAC addresses")
-#
-#
+def get_port_macs(connection, device_model, module, port):
+    """
+    :param connection: switch connector
+    :param device_model: switch model
+    :param module: cluster member number
+    :param port: port number
+    :return: cabling diagnostics
+    """
+    try:
+        # Cisco
+        if re.search('WS-C', device_model):
+            port_label = get_port_label(device_model)
+            if re.search('WS-C2950',device_model):
+                command = "show mac-address-table interface " + port_label + port
+            else:
+                command = "show mac address-table interface " + port_label + port
 
+            result = device_show_cmd(connection, command, module)
+            macs = re.findall("[\w\d]+\.[\w\d]+\.[\w\d]+", result)
+            print(macs)
+
+        return macs
+
+    except Exception as ex:
+        print("get_port_macs exception: ", ex.message)
+
+
+########################################################################################################################

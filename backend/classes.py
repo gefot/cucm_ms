@@ -26,6 +26,7 @@ class Phone:
         self.switchport_power_status = "unknown"
         self.switchport_cabling = "unknown"
         self.switchport_found_mac = "unknown"
+        self.switchport_macs = "unknown"
 
 
     def print_device_axl(self):
@@ -40,7 +41,7 @@ class Phone:
                                                           self.responsible_person, self.switchport))
 
     def print_device_full_net(self):
-        print("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, \
+        print("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, \
                                                                           self.device_type, self.status, self.timestamp, self.responsible_person,\
                                                                           self.switchport, self.switchport_status, self.switchport_power_status, \
-                                                                          self.switchport_cabling, self.switchport_found_mac))
+                                                                          self.switchport_cabling, self.switchport_found_mac, self.switchport_macs))

@@ -14,7 +14,6 @@ def device_connect_multithread(dev):
         sw_device = m.group(1)
         module = m.group(2)
         port = m.group(3)
-        print(sw_device)
 
         if sw_device == "noc-clust-sw":
             conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
@@ -25,10 +24,12 @@ def device_connect_multithread(dev):
         port_status = module_network_device_funcs.get_port_status(conn, device_model, module, port)
         port_power_status = module_network_device_funcs.get_port_power_status(conn, device_model, module, port)
         port_cabling_status = module_network_device_funcs.get_port_cabling(conn, device_model, module, port)
+        port_macs = module_network_device_funcs.get_port_macs(conn, device_model, module, port)
 
         dev.switchport_status = port_status
         dev.switchport_power_status = port_power_status
         dev.switchport_cabling = port_cabling_status
+        dev.switchport_macs = port_macs
 
 
 ########################################################################################################################
@@ -141,9 +142,6 @@ print("\n--->Runtime After database SQL query = {} \n\n\n".format(datetime.datet
 threads = []
 try:
     for dev in unreg_devices:
-        print("--->Runtime = {}".format(datetime.datetime.now() - start))
-        dev.print_device_full()
-
         try:
             process = Thread(target=device_connect_multithread, args=[dev])
             process.start()
