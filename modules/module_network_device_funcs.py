@@ -312,7 +312,9 @@ def get_port_macs(connection, device_model, module, port):
 
             result = device_show_cmd(connection, command, module)
             macs = re.findall("[\w\d]+\.[\w\d]+\.[\w\d]+", result)
-            print(macs)
+            for i,my_mac in enumerate(macs):
+                macs[i] = (my_mac.replace('.','')).upper()
+
 
         return macs
 

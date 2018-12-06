@@ -26,7 +26,7 @@ class Phone:
         self.switchport_power_status = "unknown"
         self.switchport_cabling = "unknown"
         self.switchport_found_mac = "unknown"
-        self.switchport_macs = "unknown"
+        self.switchport_macs = []
 
 
     def print_device_axl(self):

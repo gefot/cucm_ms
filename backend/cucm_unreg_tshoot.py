@@ -8,6 +8,7 @@ from backend.classes import Phone
 from modules import module_cucm_funcs, module_db_funcs, module_network_device_funcs
 
 
+########################################################################################################################
 def device_connect_multithread(dev):
     if dev.switchport != "unknown":
         m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d+)", dev.switchport)
@@ -30,6 +31,9 @@ def device_connect_multithread(dev):
         dev.switchport_power_status = port_power_status
         dev.switchport_cabling = port_cabling_status
         dev.switchport_macs = port_macs
+
+
+########################################################################################################################
 
 
 ########################################################################################################################
@@ -160,78 +164,14 @@ print("\n\n\n\n\n")
 for dev in unreg_devices:
     dev.print_device_full_net()
 
-# device_model = []
-# port_status = []
-# port_power = []
-# port_tdr = []
-# found_mac = []
-#
-# if len(sys.argv) == 3 and sys.argv[2] == "tshoot":
-# 	for i,device in enumerate(unreg_devices):
-# 		#print "device = ",device
-# 		try:
-# 				print "->Trying switch: ",sw_device
-# 				conn = MOD_device_funcs.device_connect(sw_connection_type,sw_device,sw_username,sw_password,sw_enable,sw_port,sw_verbose)
-#
-# 				my_device_model = MOD_device_funcs.get_device_model(conn, module)
-# 				port_label = MOD_device_funcs.get_port_label(conn, my_device_model, module)
-# 				my_port_status = MOD_device_funcs.get_port_status(conn, my_device_model, module, port_label, port)
-# 				my_port_power = MOD_device_funcs.get_port_power(conn, my_device_model, module, port_label, port)
-# 				my_port_tdr = MOD_device_funcs.get_port_tdr(conn, my_device_model, module, port_label, port)
-# 				my_port_macs = MOD_device_funcs.get_port_macs(conn, my_device_model, module, port_label, port)
-#
-# 				conn.disconnect()
-#
-# 				# Check if port_macs contains unreg_device MAC address
-# 				#print "my_port_macs =",my_port_macs
-# 				if my_port_macs:
-# 					found = False
-# 					for my_mac in my_port_macs:
-# 						mac = "SEP"+(my_mac.replace('.','')).upper()
-# 						if found == False and mac == device[0]:
-# 							found = True
-#
-# 					if found == True:
-# 						my_found_mac = "Yes"
-# 						# Perform shut/no shut
-# 						# conn = MOD_device_funcs.device_connect(sw_connection_type,sw_device,sw_username,sw_password,sw_enable,sw_port,sw_verbose)
-# 						# my_device_model = MOD_device_funcs.get_device_model(conn, module)
-# 					else:
-# 						my_found_mac = "No"
-# 				else:
-# 					my_found_mac = "No"
-#
-# 				device_model.append(my_device_model)
-# 				port_status.append(my_port_status)
-# 				port_power.append(my_port_power)
-# 				port_tdr.append(my_port_tdr)
-# 				found_mac.append(my_found_mac)
-#
-#
-# 		except Exception as e:
-# 			print "Exception:",e.message
-# 			device_model.append("unknown")
-# 			port_status.append("unknown")
-# 			port_power.append("unknown")
-# 			port_tdr.append("unknown")
-# 			found_mac.append("unknown")
-#
-# 	print "\n\n"
-# 	print device_model
-# 	print port_status
-# 	print port_power
-# 	print port_tdr
-# 	print found_mac
-#
-#
-# 	## Measure Script Execution
-# 	print "\n\n--->Runtime after Tshoot Section = ",datetime.datetime.now()-start
-#
-#
-#
-# ################################
-# ## Format output for e-mail body
-# ################################
+
+# Measure Script Execution
+print("\n--->Runtime After Tshoot Section = {} \n\n\n".format(datetime.datetime.now() - start))
+
+
+########################################################################################################################
+# Create Report
+########################################################################################################################
 # if len(unreg_devices) != len(username):
 # 	"Error: Unequal Lists\n"
 # 	exit(0)
