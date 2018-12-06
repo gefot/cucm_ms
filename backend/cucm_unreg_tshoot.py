@@ -2,9 +2,33 @@
 import json
 import datetime
 import re
+from threading import Thread
 
 from backend.classes import Phone
 from modules import module_cucm_funcs, module_db_funcs, module_network_device_funcs
+
+
+def device_connect_multithread(dev):
+    if dev.switchport != "unknown":
+        m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d+)", dev.switchport)
+        sw_device = m.group(1)
+        module = m.group(2)
+        port = m.group(3)
+        print(sw_device)
+
+        if sw_device == "noc-clust-sw":
+            conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
+        else:
+            conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+
+        device_model = module_network_device_funcs.get_device_model(conn, module)
+        port_status = module_network_device_funcs.get_port_status(conn, device_model, module, port)
+        port_power_status = module_network_device_funcs.get_port_power_status(conn, device_model, module, port)
+        port_cabling_status = module_network_device_funcs.get_port_cabling(conn, device_model, module, port)
+
+        dev.switchport_status = port_status
+        dev.switchport_power_status = port_power_status
+        dev.switchport_cabling = port_cabling_status
 
 
 ########################################################################################################################
@@ -76,18 +100,18 @@ except:
 ########################################################################################################################
 # Replace 3-digit internal extensions with the corresponding translation patterns
 ########################################################################################################################
-# try:
-#     xlation_patterns = module_cucm_funcs.cucm_get_translation_patterns(CM_PUB_CREDS)
-#     # print(xlation_patterns)
-#     for dev in unreg_devices:
-#         try:
-#             if len(dev.extension) == 3:
-#                 dev.extension = xlation_patterns[dev.extension]
-#         except:
-#             continue
-# except Exception as ex:
-#     print(ex)
-#     exit(0)
+try:
+    xlation_patterns = module_cucm_funcs.cucm_get_translation_patterns(CM_PUB_CREDS)
+    # print(xlation_patterns)
+    for dev in unreg_devices:
+        try:
+            if len(dev.extension) == 3:
+                dev.extension = xlation_patterns[dev.extension]
+        except:
+            continue
+except Exception as ex:
+    print(ex)
+    exit(0)
 
 
 ########################################################################################################################
@@ -114,36 +138,16 @@ print("\n--->Runtime After database SQL query = {} \n\n\n".format(datetime.datet
 ########################################################################################################################
 # Troubleshooting Section
 ########################################################################################################################
+threads = []
 try:
     for dev in unreg_devices:
-        dev.print_device_full()
         print("--->Runtime = {}".format(datetime.datetime.now() - start))
+        dev.print_device_full()
 
         try:
-            if dev.switchport != "unknown":
-                m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d)", dev.switchport)
-                sw_device = m.group(1)
-                module = m.group(2)
-                port = m.group(3)
-                print(sw_device)
-
-                if sw_device == "noc-clust-sw":
-                    conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
-                else:
-                    conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
-
-                device_model = module_network_device_funcs.get_device_model(conn, module)
-                # print(device_model)
-                port_status = module_network_device_funcs.get_port_status(conn, device_model, module, port)
-                # print(port_status)
-                port_power_status = module_network_device_funcs.get_port_power_status(conn, device_model, module, port)
-                # print(port_power_status)
-                port_cabling_status = module_network_device_funcs.get_port_cabling(conn, device_model, module, "5")
-                # print(port_cabling_status)
-
-                dev.switchport_status = port_status
-                dev.switchport_power_status = port_power_status
-                dev.switchport_cabling = port_cabling_status
+            process = Thread(target=device_connect_multithread, args=[dev])
+            process.start()
+            threads.append(process)
 
         except:
             continue
@@ -151,8 +155,10 @@ except Exception as ex:
     print(ex)
     exit(0)
 
+for process in threads:
+    process.join()
 
-
+print("\n\n\n\n\n")
 for dev in unreg_devices:
     dev.print_device_full_net()
 

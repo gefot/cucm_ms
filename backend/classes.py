@@ -32,14 +32,15 @@ class Phone:
         print("{}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, self.device_type))
 
     def print_device_ris(self):
-        print("{}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, self.device_type, \
-                                                  self.status, self.timestamp))
+        print("{}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, \
+                                                  self.device_type, self.status, self.timestamp))
     def print_device_full(self):
-        print("{}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, self.device_type, \
-                                                          self.status, self.timestamp, self.responsible_person, \
-                                                          self.switchport))
+        print("{}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, \
+                                                          self.device_type, self.status, self.timestamp, \
+                                                          self.responsible_person, self.switchport))
 
     def print_device_full_net(self):
-        print("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, self.device_type, \
-                                                          self.status, self.timestamp, self.responsible_person, \
-                                                          self.switchport, self.switchport_status, self.switchport_power_status, self.switchport_cabling, self.switchport_found_mac))
+        print("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, \
+                                                                          self.device_type, self.status, self.timestamp, self.responsible_person,\
+                                                                          self.switchport, self.switchport_status, self.switchport_power_status, \
+                                                                          self.switchport_cabling, self.switchport_found_mac))

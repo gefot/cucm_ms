@@ -152,7 +152,7 @@ def get_switch_mac_table(connection, device_model, module):
                 try:
                     my_port = re.search(r'.*([FGT][aie][\d|\/]+)', mac_entry).group(1)
                     if my_port not in trunk_ports:
-                        print(mac_entry)
+                        # print(mac_entry)
                         entry = re.search(r'(\d+)\s+([\w\d]+\.[\w\d]+\.[\w\d]+)[\w\d\s]+[FG][ai].*\/(\d+)', mac_entry)
                         vlan = entry.group(1)
                         mac = entry.group(2)
@@ -279,7 +279,7 @@ def get_port_cabling(connection, device_model, module, port):
                 command = "test cable-diagnostics tdr interface " + port_label + port
                 result = device_show_cmd(connection, command, module)
                 time.sleep(1)
-                command = "show cable-diagnostics tdr interface "+port_label+port
+                command = "show cable-diagnostics tdr interface " + port_label + port
                 result = device_show_cmd(connection, command, module)
                 port_cabling = re.search(r'(Fa|Gi)[\w\d\/\s\+\-]*',result).group()
             else:

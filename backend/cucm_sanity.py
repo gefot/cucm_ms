@@ -2,8 +2,41 @@
 import json
 import datetime
 import re
+from threading import Thread
 
 from modules import module_cucm_funcs, module_db_funcs, module_network_device_funcs
+
+
+########################################################################################################################
+def device_connect_multithread(sw_device):
+
+    if sw_device == "noc-clust-sw":
+        conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
+    else:
+        conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+
+    modules = module_network_device_funcs.get_cisco_cluster_members(conn)
+
+    for module in modules:
+        # Run 'show cdp neighbors' and get device and switchport
+        result = module_network_device_funcs.device_show_cmd(conn, "show cdp neighbors", module)
+        lines = result.split('\n')
+        for l in lines:
+            if re.match("^SEP", l) or re.match("^ATA", l):
+                mac_address = re.search("(\w\w\w[\w\d]*)", l).group(1).upper()
+                port = re.search(r'.*\/(\d+)\s', l).group(1)
+                my_dev = [mac_address, sw_device + "-m" + module + "-p" + str(int(port))]
+                switch_devices_table.append(my_dev)
+
+        # Get switch full mac address table and keeps only voice MACs
+        device_model = module_network_device_funcs.get_device_model(conn, module)
+        full_mac_table = module_network_device_funcs.get_switch_mac_table(conn, device_model, module)
+        for mac_entry in full_mac_table:
+            if len(mac_entry[0]) == 3 and (mac_entry[0] == "111" or mac_entry[0].startswith('7')):
+                my_mac = (mac_entry[1].upper()).replace('.', '')
+                my_dev = [mac_entry[0], my_mac, sw_device + "-m" + module + "-p" + str(int(mac_entry[2]))]
+                voice_vlan_mac_table.append(my_dev)
+    conn.disconnect()
 
 
 ########################################################################################################################
@@ -116,44 +149,23 @@ try:
     switch_list = fd.read().splitlines()
     fd.close()
     print(switch_list)
-    # switch_list = ["bld67cbsmnt-sw", "bld34fl02-sw", "bld61fl00-sw"]
-    # switch_list = ["noc-clust-sw"]
-    switch_list = ["bld34fl02-sw", "noc-clust-sw", "bld61fl00-sw", "bld67cbsmnt-sw"]
+    # switch_list = ["bld34fl02-sw", "noc-clust-sw", "bld61fl00-sw", "bld67cbsmnt-sw"]
 
     switch_devices_table = []
     voice_vlan_mac_table = []
 
+    threads = []
     for sw_device in switch_list:
-        print("\nConnecting to switch: ", sw_device)
+        try:
+            print("\nConnecting to switch: ", sw_device)
+            process = Thread(target=device_connect_multithread, args=[sw_device])
+            process.start()
+            threads.append(process)
+        except:
+            continue
 
-        if sw_device == "noc-clust-sw":
-            conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
-        else:
-            conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
-
-        modules = module_network_device_funcs.get_cisco_cluster_members(conn)
-
-        for module in modules:
-            # Run 'show cdp neighbors' and get device and switchport
-            result = module_network_device_funcs.device_show_cmd(conn, "show cdp neighbors", module)
-            lines = result.split('\n')
-            for l in lines:
-                if re.match("^SEP", l) or re.match("^ATA", l):
-                    mac_address = re.search("(\w\w\w[\w\d]*)", l).group(1).upper()
-                    port = re.search(r'.*\/(\d+)\s', l).group(1)
-                    my_dev = [mac_address, sw_device + "-m" + module + "-p" + str(int(port))]
-                    switch_devices_table.append(my_dev)
-
-            # Get switch full mac address table and keeps only voice MACs
-            device_model = module_network_device_funcs.get_device_model(conn, module)
-            full_mac_table = module_network_device_funcs.get_switch_mac_table(conn, device_model, module)
-            for mac_entry in full_mac_table:
-                if len(mac_entry[0]) == 3 and (mac_entry[0] == "111" or mac_entry[0].startswith('7')):
-                    my_mac = (mac_entry[1].upper()).replace('.', '')
-                    my_dev = [mac_entry[0], my_mac, sw_device + "-m" + module + "-p" + str(int(mac_entry[2]))]
-                    voice_vlan_mac_table.append(my_dev)
-
-        conn.disconnect()
+    for process in threads:
+        process.join()
 
     for device in switch_devices_table:
         print(device)
@@ -223,7 +235,7 @@ print("\n--->Runtime After Processing = {} \n\n\n".format(datetime.datetime.now(
 
 
 ################################################################################
-# Write file and send e-mail
+# Construct report file
 ################################################################################
 mail_body = """
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -245,11 +257,6 @@ if sanity_body or security_body:
     target = open(MAIL_FILE, "w")
     target.write(mail_body)
     target.close()
-
-# if sanity_body or security_body:
-#     # os_command = "/usr/bin/mail -s \"CUCM Sanity and Security Check\" gfot@it.auth.gr < " + mail_file
-#     os_command = "/usr/bin/mail -s \"CUCM Sanity and Security Check\" anemostaff@it.auth.gr < " + mail_file
-#     os.system(os_command)
 
 
 # Measure Script Execution
