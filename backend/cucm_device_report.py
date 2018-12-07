@@ -12,8 +12,8 @@ REPORT_FILE_1 = '../data/output/report_devices.txt'
 REPORT_FILE_2 = '../data/output/report_devices_unregistered.txt'
 
 # data = json.load(open('/home/pbx/cucm_ms/data/access.json'))  # Linux
-#REPORT_FILE_1 = '../data/output/report_devices.txt'            #FIX
-#REPORT_FILE_2 = '../data/output/report_devices_unregistered.txt'
+# REPORT_FILE_1 = '../data/output/report_devices.txt'            #FIX
+# REPORT_FILE_2 = '../data/output/report_devices_unregistered.txt'
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'cm_server_ip_address': str(data["cucm"]["pub_ip_address"]), \
@@ -21,12 +21,6 @@ CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'soap_user': str(data["cucm"]["soap_user"]), \
                 'soap_pass': str(data["cucm"]["soap_pass"])
                 }
-
-DB_CREDS = {'db_host': str(data["db1"]["db_host"]), \
-            'db_username': str(data["db1"]["db_username"]), \
-            'db_password': str(data["db1"]["db_password"]), \
-            'db_name': str(data["db1"]["db_name"])
-            }
 
 
 ########################################################################################################################
