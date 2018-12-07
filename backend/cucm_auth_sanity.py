@@ -41,8 +41,8 @@ def device_connect_multithread(sw_device):
                     my_dev = [mac_entry[0], my_mac, sw_device + "-m" + module + "-p" + str(int(mac_entry[2]))]
                     voice_vlan_mac_table.append(my_dev)
         conn.disconnect()
-    except Exception as ex:
-        print("device_connect_multithread -> Can not connect to switchport: " + dev.switchport)
+    except:
+        print("device_connect_multithread -> Can not connect to device {}\n".format(sw_device))
 
 
 

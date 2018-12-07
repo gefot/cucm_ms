@@ -33,8 +33,8 @@ def device_connect_multithread(dev):
             dev.switchport_power_status = port_power_status
             dev.switchport_cabling = port_cabling_status
             dev.switchport_macs = port_macs
-    except Exception as ex:
-        print("device_connect_multithread -> Can not connect to switchport: " + dev.switchport)
+    except:
+        print("device_connect_multithread -> Can not connect to switchport {} for {}\n".format(dev.switchport, dev.name))
 
 ########################################################################################################################
 
