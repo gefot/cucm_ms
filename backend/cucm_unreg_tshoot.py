@@ -3,7 +3,6 @@ import json
 import datetime
 import re
 from threading import Thread
-import time
 
 from backend.classes import Phone
 from modules import module_cucm_funcs, module_db_funcs, module_network_device_funcs
@@ -22,11 +21,12 @@ def device_connect_multithread(dev):
         else:
             conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
 
-        device_model = module_network_device_funcs.get_device_model(conn, module)
-        port_status = module_network_device_funcs.get_port_status(conn, device_model, module, port)
-        port_power_status = module_network_device_funcs.get_port_power_status(conn, device_model, module, port)
-        port_cabling_status = module_network_device_funcs.get_port_cabling(conn, device_model, module, port)
-        port_macs = module_network_device_funcs.get_port_macs(conn, device_model, module, port)
+        vendor = "cisco"
+
+        port_status = module_network_device_funcs.get_port_status(conn, vendor, module, port)
+        port_power_status = module_network_device_funcs.get_port_power_status(conn, vendor, module, port)
+        port_cabling_status = module_network_device_funcs.get_port_cabling(conn, vendor, module, port)
+        port_macs = module_network_device_funcs.get_port_macs(conn, vendor, module, port)
 
         dev.switchport_status = port_status
         dev.switchport_power_status = port_power_status
@@ -80,29 +80,6 @@ RT_CREDS = {'my_connection_type': str(data["router"]["device_connection_type"]),
 ########################################################################################################################
 start = datetime.datetime.now()
 
-# sw_device = "bld62afl01-sw"
-# conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
-# res1 = module_network_device_funcs.get_device_model(conn, "cisco", "0")
-# res2 = module_network_device_funcs.get_cisco_cluster_members(conn)
-# res3 = module_network_device_funcs.get_switch_trunk_ports(conn, "cisco", "0")
-# res4 = module_network_device_funcs.get_switch_mac_table(conn, "cisco", "0")
-# res5 = module_network_device_funcs.get_port_status(conn, "cisco", "0", "5")
-# res6 = module_network_device_funcs.get_port_power_status(conn, "cisco", "0", "5")
-# res7 = module_network_device_funcs.get_port_cabling(conn, "cisco", "0", "5")
-# res8 = module_network_device_funcs.get_port_macs(conn, "cisco", "0", "5")
-#
-# print(res1)
-# print(res2)
-# print(res3)
-# print(res4)
-# print(res5)
-# print(res6)
-# print(res7)
-# print(res8)
-#
-# conn.disconnect()
-
-
 ########################################################################################################################
 # Get unregistered devices from device report
 # Construct a Phone list with name, description, extension, calling_name
@@ -155,7 +132,7 @@ try:
     conn.close()
 except Exception as ex:
     print(ex)
-    conn.close()
+    conn.disconnect()
     exit(0)
 
 
