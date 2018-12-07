@@ -19,9 +19,59 @@ def device_connect(my_device, SW_CREDS):
         conn.enable()
 
         return conn
-
     except Exception as ex:
         print("device_connect exception: ", ex.message)
+
+
+########################################################################################################################
+def device_show_cmd(conn, command, vendor, module):
+    """
+    :param conn: switch connector
+    :param command: CLI command
+    :param module: cluster member number
+    :return: output for CLI show command
+    """
+    result = ""
+    try:
+        if vendor == "cisco":
+            if module == "0":
+                result = conn.send_command(command)
+            else:
+                conn.send_command("rcommand " + module, auto_find_prompt=False)
+                # print(connection.find_prompt())
+                result = conn.send_command(command)
+                conn.send_command("exit", auto_find_prompt=False)
+        elif vendor == "dell":
+            conn.send_command("terminal length 0\n",delay_factor=2)
+            result = conn.send_command(command, delay_factor=2)
+
+        return result
+
+    except Exception as ex:
+        print("device_show_cmd exception: ", ex.message)
+
+
+########################################################################################################################
+def get_device_model(conn, vendor, module):
+    """
+    :param conn: switch connector
+    :param module: cluster module number
+    :return: device model (eg. WS-C2950C-24)
+    """
+    try:
+        device_model = ""
+        if vendor == "cisco":
+            result = device_show_cmd(conn, "show version", "cisco", module)
+            device_model = re.search(r'cisco (WS\-[\d\w\-\+]*)',result).group(1)
+        elif vendor == "dell":
+            result = device_show_cmd(conn, "show version", "dell", module)
+            device_model = result
+
+        return device_model
+
+
+    except Exception as ex:
+        print("get_device_model exception: ", ex.message)
 
 
 ########################################################################################################################
@@ -31,9 +81,8 @@ def get_cisco_cluster_members(conn):
     :return: list of switch cluster members, eg [0,1,2,3] or ['0'] if none
     """
     try:
-        command = "show cluster members"
         module = "0"
-        result = device_show_cmd(conn, command, module)
+        result = device_show_cmd(conn, "show cluster members", "cisco", module)
 
         modules = []
         lines = re.split('\n', result)
@@ -51,66 +100,17 @@ def get_cisco_cluster_members(conn):
 
 
 ########################################################################################################################
-def get_device_model(conn, module):
-    """
-    :param conn: switch connector
-    :param module: cluster module number
-    :return: device model (eg. WS-C2950C-24)
-    """
-    try:
-        # Cisco
-        command = "show version"
-        result = device_show_cmd(conn, command, module)
-
-        device_model = re.search(r'cisco (WS\-[\d\w\-\+]*)',result).group(1)
-
-        return device_model
-
-    except Exception as ex:
-        print("get_device_model exception: ", ex.message)
-
-
-########################################################################################################################
-def device_show_cmd(conn, command, module):
-    """
-    :param conn: switch connector
-    :param command: CLI command
-    :param module: cluster member number
-    :return: output for CLI show command
-    """
-    try:
-        if module == "0":
-            result = conn.send_command(command)
-
-            return result
-        else:
-            conn.send_command("rcommand " + module, auto_find_prompt=False)
-            # print(connection.find_prompt())
-            result = conn.send_command(command)
-            conn.send_command("exit", auto_find_prompt=False)
-
-            return result
-
-    except Exception as ex:
-        print("device_show_cmd exception: ", ex.message)
-
-
-########################################################################################################################
-def get_switch_trunk_ports(connection, device_model, module):
+def get_switch_trunk_ports(connection, vendor, module):
     """
     :param connection: switch connector
     :param module: cluster member number
     :return: trunk interface list, eg. ['Fa0/1', 'Gi0/2']
     """
     try:
-        # Cisco
-        if re.search('WS-C', device_model):
-            trunk_ports = []
-
-            command = "show interface trunk"
-            result = device_show_cmd(connection, command, module)
+        trunk_ports = []
+        if vendor == "cisco":
+            result = device_show_cmd(connection, "show interface trunk", "cisco", module)
             trunk_ints = re.split('\n', result)
-
             for trunk in trunk_ints:
                 try:
                     trunk_port = re.search(r'([FGT][aie][\d|\/]+).*trunking', trunk)
