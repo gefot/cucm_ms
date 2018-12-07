@@ -30,7 +30,7 @@ def db_connect(DB_CREDS):
 
 
 ########################################################################################################################
-def fetch_from_authdb_per_dn(cursor, dn):
+def auth_fetch_from_db_per_dn(cursor, dn):
     """
     :param cursor: database cursor (connector)
     :param dn: extension

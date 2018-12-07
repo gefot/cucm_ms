@@ -126,7 +126,7 @@ try:
     conn = module_db_funcs.db_connect(DB_CREDS)
     cursor = conn.cursor()
     for dev in unreg_devices:
-        my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_authdb_per_dn(cursor, dev.extension)
+        my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.auth_fetch_from_db_per_dn(cursor, dev.extension)
         dev.responsible_person = my_username
         dev.switchport = my_switchport
     conn.close()
