@@ -10,36 +10,40 @@ from modules import module_cucm_funcs, module_db_funcs, module_network_device_fu
 ########################################################################################################################
 def device_connect_multithread(sw_device):
 
-    if sw_device == "noc-clust-sw":
-        conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
-    else:
-        conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+    try:
+        if sw_device == "noc-clust-sw":
+            conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
+        else:
+            conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
 
-    modules = module_network_device_funcs.get_cisco_cluster_members(conn)
+        modules = module_network_device_funcs.get_cisco_cluster_members(conn)
 
-    for module in modules:
-        # Run 'show cdp neighbors' and get device and switchport
-        command = "show cdp neighbors"
-        vendor = "cisco"
+        for module in modules:
+            # Run 'show cdp neighbors' and get device and switchport
+            command = "show cdp neighbors"
+            vendor = "cisco"
 
-        result = module_network_device_funcs.device_show_cmd(conn, command, vendor, module)
-        lines = result.split('\n')
-        for l in lines:
-            if re.match("^SEP", l) or re.match("^ATA", l):
-                mac_address = re.search("(\w\w\w[\w\d]*)", l).group(1).upper()
-                port = re.search(r'.*\/(\d+)\s', l).group(1)
-                my_dev = [mac_address, sw_device + "-m" + module + "-p" + str(int(port))]
-                switch_devices_table.append(my_dev)
+            result = module_network_device_funcs.device_show_cmd(conn, command, vendor, module)
+            lines = result.split('\n')
+            for l in lines:
+                if re.match("^SEP", l) or re.match("^ATA", l):
+                    mac_address = re.search("(\w\w\w[\w\d]*)", l).group(1).upper()
+                    port = re.search(r'.*\/(\d+)\s', l).group(1)
+                    my_dev = [mac_address, sw_device + "-m" + module + "-p" + str(int(port))]
+                    switch_devices_table.append(my_dev)
 
-        # Get switch full mac address table and keeps only voice MACs
-        device_model = module_network_device_funcs.get_device_model(conn, vendor, module)
-        full_mac_table = module_network_device_funcs.get_switch_mac_table(conn, vendor, module)
-        for mac_entry in full_mac_table:
-            if len(mac_entry[0]) == 3 and (mac_entry[0] == "111" or mac_entry[0].startswith('7')):
-                my_mac = (mac_entry[1].upper()).replace('.', '')
-                my_dev = [mac_entry[0], my_mac, sw_device + "-m" + module + "-p" + str(int(mac_entry[2]))]
-                voice_vlan_mac_table.append(my_dev)
-    conn.disconnect()
+            # Get switch full mac address table and keeps only voice MACs
+            device_model = module_network_device_funcs.get_device_model(conn, vendor, module)
+            full_mac_table = module_network_device_funcs.get_switch_mac_table(conn, vendor, module)
+            for mac_entry in full_mac_table:
+                if len(mac_entry[0]) == 3 and (mac_entry[0] == "111" or mac_entry[0].startswith('7')):
+                    my_mac = (mac_entry[1].upper()).replace('.', '')
+                    my_dev = [mac_entry[0], my_mac, sw_device + "-m" + module + "-p" + str(int(mac_entry[2]))]
+                    voice_vlan_mac_table.append(my_dev)
+        conn.disconnect()
+    except Exception as ex:
+        print("device_connect_multithread -> Can not connect to switchport: " + dev.switchport)
+
 
 
 ########################################################################################################################

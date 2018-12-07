@@ -10,29 +10,31 @@ from modules import module_cucm_funcs, module_db_funcs, module_network_device_fu
 
 ########################################################################################################################
 def device_connect_multithread(dev):
-    if dev.switchport != "unknown":
-        m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d+)", dev.switchport)
-        sw_device = m.group(1)
-        module = m.group(2)
-        port = m.group(3)
+    try:
+        if dev.switchport != "unknown":
+            m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d+)", dev.switchport)
+            sw_device = m.group(1)
+            module = m.group(2)
+            port = m.group(3)
 
-        if sw_device == "noc-clust-sw":
-            conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
-        else:
-            conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+            if sw_device == "noc-clust-sw":
+                conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
+            else:
+                conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
 
-        vendor = "cisco"
+            vendor = "cisco"
 
-        port_status = module_network_device_funcs.get_port_status(conn, vendor, module, port)
-        port_power_status = module_network_device_funcs.get_port_power_status(conn, vendor, module, port)
-        port_cabling_status = module_network_device_funcs.get_port_cabling(conn, vendor, module, port)
-        port_macs = module_network_device_funcs.get_port_macs(conn, vendor, module, port)
+            port_status = module_network_device_funcs.get_port_status(conn, vendor, module, port)
+            port_power_status = module_network_device_funcs.get_port_power_status(conn, vendor, module, port)
+            port_cabling_status = module_network_device_funcs.get_port_cabling(conn, vendor, module, port)
+            port_macs = module_network_device_funcs.get_port_macs(conn, vendor, module, port)
 
-        dev.switchport_status = port_status
-        dev.switchport_power_status = port_power_status
-        dev.switchport_cabling = port_cabling_status
-        dev.switchport_macs = port_macs
-
+            dev.switchport_status = port_status
+            dev.switchport_power_status = port_power_status
+            dev.switchport_cabling = port_cabling_status
+            dev.switchport_macs = port_macs
+    except Exception as ex:
+        print("device_connect_multithread -> Can not connect to switchport: " + dev.switchport)
 
 ########################################################################################################################
 
