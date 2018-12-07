@@ -9,6 +9,7 @@ def device_connect(my_device, SW_CREDS):
     """
     :param my_device: the switch to connect
     :param SW_CREDS: switch credentials
+
     :return: switch connector
     """
     try:
@@ -19,6 +20,7 @@ def device_connect(my_device, SW_CREDS):
         conn.enable()
 
         return conn
+
     except Exception as ex:
         print("device_connect exception: ", ex.message)
 
@@ -28,24 +30,27 @@ def device_show_cmd(conn, command, vendor, module):
     """
     :param conn: switch connector
     :param command: CLI command
-    :param module: cluster member number
-    :return: output for CLI show command
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
+
+    :return: output of the the CLI show command
     """
-    result = ""
     try:
+        show_output = ""
+
         if vendor == "cisco":
             if module == "0":
-                result = conn.send_command(command)
+                show_output = conn.send_command(command)
             else:
                 conn.send_command("rcommand " + module, auto_find_prompt=False)
                 # print(connection.find_prompt())
-                result = conn.send_command(command)
+                show_output = conn.send_command(command)
                 conn.send_command("exit", auto_find_prompt=False)
         elif vendor == "dell":
             conn.send_command("terminal length 0\n",delay_factor=2)
-            result = conn.send_command(command, delay_factor=2)
+            show_output = conn.send_command(command, delay_factor=2)
 
-        return result
+        return show_output
 
     except Exception as ex:
         print("device_show_cmd exception: ", ex.message)
@@ -55,20 +60,25 @@ def device_show_cmd(conn, command, vendor, module):
 def get_device_model(conn, vendor, module):
     """
     :param conn: switch connector
-    :param module: cluster module number
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
+
     :return: device model (eg. WS-C2950C-24)
     """
     try:
         device_model = ""
+
         if vendor == "cisco":
-            result = device_show_cmd(conn, "show version", "cisco", module)
+            command = "show version"
+            result = device_show_cmd(conn, command, vendor, module)
             device_model = re.search(r'cisco (WS\-[\d\w\-\+]*)',result).group(1)
         elif vendor == "dell":
-            result = device_show_cmd(conn, "show version", "dell", module)
+            command = "show version"
+            result = device_show_cmd(conn, command, vendor, module)
             device_model = result
 
-        return device_model
 
+        return device_model
 
     except Exception as ex:
         print("get_device_model exception: ", ex.message)
@@ -78,11 +88,14 @@ def get_device_model(conn, vendor, module):
 def get_cisco_cluster_members(conn):
     """
     :param conn: switch connector
+
     :return: list of switch cluster members, eg [0,1,2,3] or ['0'] if none
     """
     try:
+        command = "show cluster members"
+        vendor = "cisco"
         module = "0"
-        result = device_show_cmd(conn, "show cluster members", "cisco", module)
+        result = device_show_cmd(conn, command, vendor, module)
 
         modules = []
         lines = re.split('\n', result)
@@ -103,13 +116,17 @@ def get_cisco_cluster_members(conn):
 def get_switch_trunk_ports(connection, vendor, module):
     """
     :param connection: switch connector
-    :param module: cluster member number
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
+
     :return: trunk interface list, eg. ['Fa0/1', 'Gi0/2']
     """
     try:
         trunk_ports = []
+
         if vendor == "cisco":
-            result = device_show_cmd(connection, "show interface trunk", "cisco", module)
+            command = "show interface trunk"
+            result = device_show_cmd(connection, command, vendor, module)
             trunk_ints = re.split('\n', result)
             for trunk in trunk_ints:
                 try:
@@ -127,32 +144,34 @@ def get_switch_trunk_ports(connection, vendor, module):
 
 
 ########################################################################################################################
-def get_switch_mac_table(connection, device_model, module):
+def get_switch_mac_table(connection, vendor, module):
     """
     :param connection: switch connector
-    :param device_model: switch model
-    :param module: cluster member number
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
+
     :return: [vlan, mac address, port]
     """
     try:
-        # Cisco
-        if re.search('WS-C', device_model):
+        mac_entry_list = []
+
+        if vendor == "cisco":
+            device_model = get_device_model(connection, vendor, module)
             if re.search('WS-C2950', device_model):
                 command = "show mac-address-table"
             else:
                 command = "show mac address-table"
 
-            result = device_show_cmd(connection, command, module)
+            result = device_show_cmd(connection, command, vendor, module)
             mac_entries = re.split('\n', result)
 
-            trunk_ports = get_switch_trunk_ports(connection, device_model, module)
+            trunk_ports = get_switch_trunk_ports(connection, vendor, module)
 
             mac_entry_list = []
             for mac_entry in mac_entries:
                 try:
                     my_port = re.search(r'.*([FGT][aie][\d|\/]+)', mac_entry).group(1)
                     if my_port not in trunk_ports:
-                        # print(mac_entry)
                         entry = re.search(r'(\d+)\s+([\w\d]+\.[\w\d]+\.[\w\d]+)[\w\d\s]+[FG][ai].*\/(\d+)', mac_entry)
                         vlan = entry.group(1)
                         mac = entry.group(2)
@@ -169,14 +188,17 @@ def get_switch_mac_table(connection, device_model, module):
 
 
 ########################################################################################################################
-def get_port_label(device_model):
+def get_port_label(vendor, device_model):
     """
-    :param device_model: device model
+    :param vendor: eg. Cisco/Dell
+    :param device_model: exact device model
+
     :return: the preceding port label (eg. "Fa0/")depending on switch model
     """
     try:
-        # Cisco
-        if re.search('WS-C', device_model):
+        port_label = ""
+
+        if vendor == "cisco":
             if re.search('WS-C2960X',device_model) or re.search('WS-C2960S',device_model):
                 port_label = "Gi1/0/"
             elif re.search('WS-C2960G',device_model):
@@ -188,6 +210,7 @@ def get_port_label(device_model):
             else:
                 port_label = "Fa0/"
 
+
         return port_label
 
     except Exception as ex:
@@ -195,21 +218,24 @@ def get_port_label(device_model):
 
 
 ########################################################################################################################
-def get_port_status(connection, device_model, module, port):
+def get_port_status(connection, vendor, module, port):
     """
     :param connection: switch connector
-    :param device_model: switch model
-    :param module: cluster member number
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
     :param port: port number
+
     :return: port status (up/down)
     """
     try:
-        # Cisco
-        if re.search('WS-C', device_model):
-            port_label = get_port_label(device_model)
+        port_status = ""
+
+        if vendor == "cisco":
+            device_model = get_device_model(connection, vendor, module)
+            port_label = get_port_label(vendor, device_model)
 
             command = "show int " + port_label + port
-            result = device_show_cmd(connection, command, module)
+            result = device_show_cmd(connection, command, vendor, module)
 
             if re.findall("line protocol is up", result):
                 port_status = "up"
@@ -224,22 +250,25 @@ def get_port_status(connection, device_model, module, port):
 
 
 #######################################################################################################################
-def get_port_power_status(connection, device_model, module, port):
+def get_port_power_status(connection, vendor, module, port):
     """
     :param connection: switch connector
-    :param device_model: switch model
-    :param module: cluster member number
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
     :param port: port number
+
     :return: port power status
     """
     try:
-        # Cisco
-        if re.search('WS-C', device_model):
-            port_label = get_port_label(device_model)
+        port_power = ""
+
+        if vendor == "cisco":
+            device_model = get_device_model(connection, vendor, module)
+            port_label = get_port_label(vendor, device_model)
 
             if re.search('WS-C.*[PL]C',device_model):
                 command = "show power inline | include " + port_label + port
-                result = device_show_cmd(connection, command, module)
+                result = device_show_cmd(connection, command, vendor, module)
 
                 power_output = re.split(" {2,}", result)
                 if power_output[2] == "off":
@@ -260,26 +289,30 @@ def get_port_power_status(connection, device_model, module, port):
     except Exception as ex:
         print("get_port_power exception: ", ex.message)
 
+
 ########################################################################################################################
-def get_port_cabling(connection, device_model, module, port):
+def get_port_cabling(connection, vendor, module, port):
     """
     :param connection: switch connector
-    :param device_model: switch model
-    :param module: cluster member number
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
     :param port: port number
+
     :return: cabling diagnostics
     """
     try:
-        # Cisco
-        if re.search('WS-C', device_model):
-            port_label = get_port_label(device_model)
+        port_cabling = ""
+
+        if vendor == "cisco":
+            device_model = get_device_model(connection, vendor, module)
+            port_label = get_port_label(vendor, device_model)
 
             if re.search('WS-C2960',device_model):
                 command = "test cable-diagnostics tdr interface " + port_label + port
-                result = device_show_cmd(connection, command, module)
+                result = device_show_cmd(connection, command, vendor, module)
                 time.sleep(1)
                 command = "show cable-diagnostics tdr interface " + port_label + port
-                result = device_show_cmd(connection, command, module)
+                result = device_show_cmd(connection, command, vendor, module)
                 port_cabling = re.search(r'(Fa|Gi)[\w\d\/\s\+\-]*',result).group()
             else:
                 port_cabling = "Not Supported"
@@ -292,31 +325,33 @@ def get_port_cabling(connection, device_model, module, port):
 
 
 ########################################################################################################################
-# # Return a list of MAC addresses for a specific port
-def get_port_macs(connection, device_model, module, port):
+def get_port_macs(connection, vendor, module, port):
     """
     :param connection: switch connector
-    :param device_model: switch model
-    :param module: cluster member number
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
     :param port: port number
+
     :return: cabling diagnostics
     """
     try:
-        # Cisco
-        if re.search('WS-C', device_model):
-            port_label = get_port_label(device_model)
+        mac_list = ""
+
+        if vendor == "cisco":
+            device_model = get_device_model(connection, vendor, module)
+            port_label = get_port_label(vendor, device_model)
             if re.search('WS-C2950',device_model):
                 command = "show mac-address-table interface " + port_label + port
             else:
                 command = "show mac address-table interface " + port_label + port
 
-            result = device_show_cmd(connection, command, module)
-            macs = re.findall("[\w\d]+\.[\w\d]+\.[\w\d]+", result)
-            for i,my_mac in enumerate(macs):
-                macs[i] = (my_mac.replace('.','')).upper()
+            result = device_show_cmd(connection, command, vendor, module)
+            mac_list = re.findall("[\w\d]+\.[\w\d]+\.[\w\d]+", result)
+            for i,my_mac in enumerate(mac_list):
+                mac_list[i] = (my_mac.replace('.','')).upper()
 
 
-        return macs
+        return mac_list
 
     except Exception as ex:
         print("get_port_macs exception: ", ex.message)

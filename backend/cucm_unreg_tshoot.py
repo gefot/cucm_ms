@@ -80,188 +80,195 @@ RT_CREDS = {'my_connection_type': str(data["router"]["device_connection_type"]),
 ########################################################################################################################
 start = datetime.datetime.now()
 
-conn = module_network_device_funcs.device_connect("100.100.100.110", SW_CREDS)
-# time.sleep(3)
-# routerPrompt = conn.find_prompt()
-# hostname = routerPrompt[:-1]
-# print(hostname)
-# conn.send_command("terminal length 0\n",delay_factor=2)
-# result1 = conn.send_command("show lldp remote-device all\n",delay_factor=2)
-# result2 = conn.send_command("show version\n",delay_factor=2)
-# result1 = conn.send_command("show version\n")
-model = module_network_device_funcs.get_device_model(conn, "0", "cisco")
-conn.disconnect()
-print(model)
-# print(result2)
+# sw_device = "bld62afl01-sw"
+# conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+# res1 = module_network_device_funcs.get_device_model(conn, "cisco", "0")
+# res2 = module_network_device_funcs.get_cisco_cluster_members(conn)
+# res3 = module_network_device_funcs.get_switch_trunk_ports(conn, "cisco", "0")
+# res4 = module_network_device_funcs.get_switch_mac_table(conn, "cisco", "0")
+# res5 = module_network_device_funcs.get_port_status(conn, "cisco", "0", "5")
+# res6 = module_network_device_funcs.get_port_power_status(conn, "cisco", "0", "5")
+# res7 = module_network_device_funcs.get_port_cabling(conn, "cisco", "0", "5")
+# res8 = module_network_device_funcs.get_port_macs(conn, "cisco", "0", "5")
+#
+# print(res1)
+# print(res2)
+# print(res3)
+# print(res4)
+# print(res5)
+# print(res6)
+# print(res7)
+# print(res8)
+#
+# conn.disconnect()
 
 
+########################################################################################################################
+# Get unregistered devices from device report
+# Construct a Phone list with name, description, extension, calling_name
+########################################################################################################################
+unreg_devices = []
+try:
+    fd = open(UNREG_REPORT_FILE, "r")
+    for line in fd:
+        if "Unregistered devices" in line:
+            new_line = fd.readline().strip('\n')
+            while new_line is not '':
+                # print(repr(new_line))
+                device = new_line.split('\t\t')
+                # print("device=",device)
+                temp_dev = Phone(device[0], device[3], device[1], device[4])
+                unreg_devices.append(temp_dev)
+                new_line = fd.readline().strip('\n')
+    fd.close()
+except:
+    exit(0)
+
+
+########################################################################################################################
+# Replace 3-digit internal extensions with the corresponding translation patterns
+########################################################################################################################
+try:
+    xlation_patterns = module_cucm_funcs.cucm_get_translation_patterns(CM_PUB_CREDS)
+    # print(xlation_patterns)
+    for dev in unreg_devices:
+        try:
+            if len(dev.extension) == 3:
+                dev.extension = xlation_patterns[dev.extension]
+        except:
+            continue
+except Exception as ex:
+    print(ex)
+    exit(0)
+
+
+########################################################################################################################
+# Fill in all_devices with database info
+########################################################################################################################
+try:
+    conn = module_db_funcs.db_connect(DB_CREDS)
+    cursor = conn.cursor()
+    for dev in unreg_devices:
+        my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_authdb_per_dn(cursor, dev.extension)
+        dev.responsible_person = my_username
+        dev.switchport = my_switchport
+    conn.close()
+except Exception as ex:
+    print(ex)
+    conn.close()
+    exit(0)
+
+
+# Measure Script Execution
+print("\n--->Runtime After database SQL query = {} \n\n\n".format(datetime.datetime.now() - start))
+
+
+########################################################################################################################
+# Troubleshooting Section
+########################################################################################################################
+threads = []
+try:
+    for dev in unreg_devices:
+        try:
+            process = Thread(target=device_connect_multithread, args=[dev])
+            process.start()
+            threads.append(process)
+
+        except:
+            continue
+except Exception as ex:
+    print(ex)
+    exit(0)
+
+for process in threads:
+    process.join()
+
+print("\n\n\n\n\n")
+for dev in unreg_devices:
+    dev.print_device_full_net()
+
+
+# Measure Script Execution
+print("\n--->Runtime After Tshoot Section = {} \n\n\n".format(datetime.datetime.now() - start))
+
+
+########################################################################################################################
+# Create Report
+########################################################################################################################
+# if len(unreg_devices) != len(username):
+# 	"Error: Unequal Lists\n"
+# 	exit(0)
 #
-# ########################################################################################################################
-# # Get unregistered devices from device report
-# # Construct a Phone list with name, description, extension, calling_name
-# ########################################################################################################################
-# unreg_devices = []
-# try:
-#     fd = open(UNREG_REPORT_FILE, "r")
-#     for line in fd:
-#         if "Unregistered devices" in line:
-#             new_line = fd.readline().strip('\n')
-#             while new_line is not '':
-#                 # print(repr(new_line))
-#                 device = new_line.split('\t\t')
-#                 # print("device=",device)
-#                 temp_dev = Phone(device[0], device[3], device[1], device[4])
-#                 unreg_devices.append(temp_dev)
-#                 new_line = fd.readline().strip('\n')
-#     fd.close()
-# except:
-#     exit(0)
+# ## List Unregistered Devices
+# unreg_devices_str =""
+# for device in unreg_devices:
+# 	unreg_devices_str = unreg_devices_str + device[0] + "\t\t" + device[2] + "\t" + device[3] + "\t" + device[1] + "\n"
+#
+# ## Calculate unregistered devices
+# unreg_device_count = [0]*5
+# reg_devices_count = map(operator.sub, all_devices_count, unreg_devices_count)
+# print all_devices_count
+# print unreg_devices_count
+# print reg_devices_count
+#
+# ## Prepare standard mail body
+# mail_body = """
+# Device Summary (Total / Reg) : %d / %d
+#
+# Total IP Phones = %d
+# Total ATA Ports = %d (Devices = %d)
+# Total MGCP Ports = %d
+#
+# Registered IP Phones = %d
+# Registered ATA Ports = %d (Devices = %d)
+# Registered MGCP Ports = %d
+#
+# Unregistered Devices (%d):\n%s""" % (all_devices_count[0], reg_devices_count[0], all_devices_count[1], all_devices_count[2], all_devices_count[3], all_devices_count[4], reg_devices_count[1], reg_devices_count[2], reg_devices_count[3], reg_devices_count[4], unreg_devices_count[0], unreg_devices_str)
+# print mail_body
 #
 #
-# ########################################################################################################################
-# # Replace 3-digit internal extensions with the corresponding translation patterns
-# ########################################################################################################################
-# try:
-#     xlation_patterns = module_cucm_funcs.cucm_get_translation_patterns(CM_PUB_CREDS)
-#     # print(xlation_patterns)
-#     for dev in unreg_devices:
-#         try:
-#             if len(dev.extension) == 3:
-#                 dev.extension = xlation_patterns[dev.extension]
-#         except:
-#             continue
-# except Exception as ex:
-#     print(ex)
-#     exit(0)
+# ## Prepare troubleshooting message, if tshoot is requested at CLI command
+# tshoot_str = "\n\n"
+# if len(sys.argv) == 3 and sys.argv[2] == "tshoot":
+# 	# Construct tshoot string
+# 	switchport_str = []
+# 	for i,device in enumerate(unreg_devices):
+# 		if switchport[i] != "unknown":
+# 			switchport_str.append(switchport[i][0]+"-m"+str(int(switchport[i][1]))+"-p"+str(int(switchport[i][2])))
+# 		else:
+# 			switchport_str.append("unknown")
+#
+# 		tshoot_str = tshoot_str + """
+# -------------------------------------------------------------
+# %s (%s) - %s
+# Username: %s
+# Switchport: %s (%s)
+# Port Status: %s
+# Port Power: %s
+# Found MAC: %s
+# TDR: %s
+# """ % (device[0], device[2], device[1], username[i], switchport_str[i], device_model[i], port_status[i], port_power[i], found_mac[i], port_tdr[i])
+#
+# 	print tshoot_str
+# mail_body += tshoot_str
 #
 #
-# ########################################################################################################################
-# # Fill in all_devices with database info
-# ########################################################################################################################
-# try:
-#     conn = module_db_funcs.db_connect(DB_CREDS)
-#     cursor = conn.cursor()
-#     for dev in unreg_devices:
-#         my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.fetch_from_authdb_per_dn(cursor, dev.extension)
-#         dev.responsible_person = my_username
-#         dev.switchport = my_switchport
-#     conn.close()
-# except Exception as ex:
-#     print(ex)
-#     conn.close()
-#     exit(0)
+#
+# #############################
+# ## Write file and send e-mail
+# #############################
+# #print "\n---\nmail_body:\n",mail_body
+# target = open(mail_file, "w")
+# target.write(mail_body)
+# target.close()
+# os_command = "/usr/bin/mail -s \"CUCM Device Report\" anemostaff@it.auth.gr < "+mail_file
+# #os_command = "/usr/bin/mail -s \"CUCM Device Report\" gfot@it.auth.gr < "+mail_file
+# os.system(os_command)
+#
+# ## Measure Script Execution
+# print "\n\n--->Runtime final = ",datetime.datetime.now()-start
 #
 #
-# # Measure Script Execution
-# print("\n--->Runtime After database SQL query = {} \n\n\n".format(datetime.datetime.now() - start))
-#
-#
-# ########################################################################################################################
-# # Troubleshooting Section
-# ########################################################################################################################
-# threads = []
-# try:
-#     for dev in unreg_devices:
-#         try:
-#             process = Thread(target=device_connect_multithread, args=[dev])
-#             process.start()
-#             threads.append(process)
-#
-#         except:
-#             continue
-# except Exception as ex:
-#     print(ex)
-#     exit(0)
-#
-# for process in threads:
-#     process.join()
-#
-# print("\n\n\n\n\n")
-# for dev in unreg_devices:
-#     dev.print_device_full_net()
-#
-#
-# # Measure Script Execution
-# print("\n--->Runtime After Tshoot Section = {} \n\n\n".format(datetime.datetime.now() - start))
-#
-#
-# ########################################################################################################################
-# # Create Report
-# ########################################################################################################################
-# # if len(unreg_devices) != len(username):
-# # 	"Error: Unequal Lists\n"
-# # 	exit(0)
-# #
-# # ## List Unregistered Devices
-# # unreg_devices_str =""
-# # for device in unreg_devices:
-# # 	unreg_devices_str = unreg_devices_str + device[0] + "\t\t" + device[2] + "\t" + device[3] + "\t" + device[1] + "\n"
-# #
-# # ## Calculate unregistered devices
-# # unreg_device_count = [0]*5
-# # reg_devices_count = map(operator.sub, all_devices_count, unreg_devices_count)
-# # print all_devices_count
-# # print unreg_devices_count
-# # print reg_devices_count
-# #
-# # ## Prepare standard mail body
-# # mail_body = """
-# # Device Summary (Total / Reg) : %d / %d
-# #
-# # Total IP Phones = %d
-# # Total ATA Ports = %d (Devices = %d)
-# # Total MGCP Ports = %d
-# #
-# # Registered IP Phones = %d
-# # Registered ATA Ports = %d (Devices = %d)
-# # Registered MGCP Ports = %d
-# #
-# # Unregistered Devices (%d):\n%s""" % (all_devices_count[0], reg_devices_count[0], all_devices_count[1], all_devices_count[2], all_devices_count[3], all_devices_count[4], reg_devices_count[1], reg_devices_count[2], reg_devices_count[3], reg_devices_count[4], unreg_devices_count[0], unreg_devices_str)
-# # print mail_body
-# #
-# #
-# # ## Prepare troubleshooting message, if tshoot is requested at CLI command
-# # tshoot_str = "\n\n"
-# # if len(sys.argv) == 3 and sys.argv[2] == "tshoot":
-# # 	# Construct tshoot string
-# # 	switchport_str = []
-# # 	for i,device in enumerate(unreg_devices):
-# # 		if switchport[i] != "unknown":
-# # 			switchport_str.append(switchport[i][0]+"-m"+str(int(switchport[i][1]))+"-p"+str(int(switchport[i][2])))
-# # 		else:
-# # 			switchport_str.append("unknown")
-# #
-# # 		tshoot_str = tshoot_str + """
-# # -------------------------------------------------------------
-# # %s (%s) - %s
-# # Username: %s
-# # Switchport: %s (%s)
-# # Port Status: %s
-# # Port Power: %s
-# # Found MAC: %s
-# # TDR: %s
-# # """ % (device[0], device[2], device[1], username[i], switchport_str[i], device_model[i], port_status[i], port_power[i], found_mac[i], port_tdr[i])
-# #
-# # 	print tshoot_str
-# # mail_body += tshoot_str
-# #
-# #
-# #
-# # #############################
-# # ## Write file and send e-mail
-# # #############################
-# # #print "\n---\nmail_body:\n",mail_body
-# # target = open(mail_file, "w")
-# # target.write(mail_body)
-# # target.close()
-# # os_command = "/usr/bin/mail -s \"CUCM Device Report\" anemostaff@it.auth.gr < "+mail_file
-# # #os_command = "/usr/bin/mail -s \"CUCM Device Report\" gfot@it.auth.gr < "+mail_file
-# # os.system(os_command)
-# #
-# # ## Measure Script Execution
-# # print "\n\n--->Runtime final = ",datetime.datetime.now()-start
-# #
-# #
-#
-# # Measure Script Execution
-# print("\n--->Runtime final = {} \n\n\n".format(datetime.datetime.now()-start))
+
+# Measure Script Execution
+print("\n--->Runtime final = {} \n\n\n".format(datetime.datetime.now()-start))
