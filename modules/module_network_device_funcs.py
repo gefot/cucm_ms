@@ -75,7 +75,7 @@ def get_device_model(conn, vendor, module):
         elif vendor == "dell":
             command = "show version"
             result = device_show_cmd(conn, command, vendor, module)
-            device_model = result
+            device_model = re.search(r'System Model ID\.+ ([\w\d]+)', result).group(1)
 
 
         return device_model

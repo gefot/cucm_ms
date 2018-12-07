@@ -69,57 +69,70 @@ SW_CREDS = {'my_connection_type': str(data["switch"]["device_connection_type"]),
 ########################################################################################################################
 start = datetime.datetime.now()
 
-########################################################################################################################
-# Get unregistered devices from device report
-# Construct a Phone list with name, description, extension, calling_name
-########################################################################################################################
-unreg_devices = []
-try:
-    fd = open(UNREG_REPORT_FILE, "r")
-    for line in fd:
-        if "Unregistered devices" in line:
-            new_line = fd.readline().strip('\n')
-            while new_line is not '':
-                # print(repr(new_line))
-                device = new_line.split('\t\t')
-                # print("device=",device)
-                temp_dev = Phone(device[0], device[3], device[1], device[4])
-                unreg_devices.append(temp_dev)
-                new_line = fd.readline().strip('\n')
-    fd.close()
-except:
-    exit(0)
+vendor = "dell"
+module = "0"
+conn = module_network_device_funcs.device_connect("100.100.100.110", SW_CREDS)
 
-for dev in unreg_devices:
-    dev.print_device_full()
+res1 = module_network_device_funcs.device_show_cmd(conn, "show version", vendor, module)
+res2 = module_network_device_funcs.get_device_model(conn, vendor, module)
 
-########################################################################################################################
-# Troubleshooting Section
-########################################################################################################################
-threads = []
-try:
-    for dev in unreg_devices:
-        try:
-            process = Thread(target=device_connect_multithread, args=[dev])
-            process.start()
-            threads.append(process)
+conn.disconnect()
 
-        except:
-            continue
-except Exception as ex:
-    print(ex)
-    exit(0)
-
-for process in threads:
-    process.join()
-
-print("\n\n\n\n\n")
-for dev in unreg_devices:
-    dev.print_device_full_net()
+print(res1)
+print(res2)
 
 
-# Measure Script Execution
-print("\n--->Runtime After Tshoot Section = {} \n\n\n".format(datetime.datetime.now() - start))
+# ########################################################################################################################
+# # Get unregistered devices from device report
+# # Construct a Phone list with name, description, extension, calling_name
+# ########################################################################################################################
+# unreg_devices = []
+# try:
+#     fd = open(UNREG_REPORT_FILE, "r")
+#     for line in fd:
+#         if "Unregistered devices" in line:
+#             new_line = fd.readline().strip('\n')
+#             while new_line is not '':
+#                 # print(repr(new_line))
+#                 device = new_line.split('\t\t')
+#                 # print("device=",device)
+#                 temp_dev = Phone(device[0], device[3], device[1], device[4])
+#                 unreg_devices.append(temp_dev)
+#                 new_line = fd.readline().strip('\n')
+#     fd.close()
+# except:
+#     exit(0)
+#
+# for dev in unreg_devices:
+#     dev.print_device_full()
+#
+# ########################################################################################################################
+# # Troubleshooting Section
+# ########################################################################################################################
+# threads = []
+# try:
+#     for dev in unreg_devices:
+#         try:
+#             process = Thread(target=device_connect_multithread, args=[dev])
+#             process.start()
+#             threads.append(process)
+#
+#         except:
+#             continue
+# except Exception as ex:
+#     print(ex)
+#     exit(0)
+#
+# for process in threads:
+#     process.join()
+#
+# print("\n\n\n\n\n")
+# for dev in unreg_devices:
+#     dev.print_device_full_net()
+#
+#
+# # Measure Script Execution
+# print("\n--->Runtime After Tshoot Section = {} \n\n\n".format(datetime.datetime.now() - start))
 
 
 # Measure Script Execution
