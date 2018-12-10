@@ -127,6 +127,7 @@ except Exception as ex:
 ########################################################################################################################
 # Fill in all_devices with database info
 ########################################################################################################################
+conn = ""
 try:
     conn = module_db_funcs.db_connect(DB_CREDS)
     cursor = conn.cursor()
@@ -153,15 +154,15 @@ for dev in all_devices:
 # switch_devices_table: [MAC address, switchport]
 # voice_vlan_mac_table: [vlan, MAC address, switchport]
 ########################################################################################################################
+switch_devices_table = []
+voice_vlan_mac_table = []
+
 try:
     fd = open(SWITCH_FILE, "r")
     switch_list = fd.read().splitlines()
     fd.close()
     print(switch_list)
     # switch_list = ["bld34fl02-sw", "noc-clust-sw", "bld61fl00-sw", "bld67cbsmnt-sw"]
-
-    switch_devices_table = []
-    voice_vlan_mac_table = []
 
     threads = []
     for sw_device in switch_list:
@@ -223,7 +224,7 @@ except Exception as ex:
 
 # Security Check
 # Excluded MACs: cvoice-rc-gw, 5x RC IP Phones registered at the old CUCM, old CUCMs
-excluded_macs = ['']
+# excluded_macs = ['']
 excluded_macs = ['C89C1D492B50', '000C2905DB8B', '000C291D59FB', '000C2950DF27', '000C31E9F121', 'C89C1D893390', 'E41F13252289', 'E41F1325280B']
 
 security_body = ""
