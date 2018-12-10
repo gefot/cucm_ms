@@ -9,32 +9,27 @@ from modules import module_cucm_funcs, module_db_funcs, module_network_device_fu
 
 
 ########################################################################################################################
-def device_connect_multithread(dev):
+def device_connect_multithread(sw_dev):
     try:
-        if dev.switchport != "unknown":
-            m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d+)", dev.switchport)
-            sw_device = m.group(1)
-            module = m.group(2)
-            port = m.group(3)
 
-            if sw_device == "noc-clust-sw":
-                conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
-            else:
-                conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+        print("\nConnecting to switch: ", sw_dev)
+        vendor = "dell"
+        module = "0"
 
-            vendor = "cisco"
+        try:
+            conn = module_network_device_funcs.device_connect(sw_dev, SW_CREDS)
+        except:
+            conn = module_network_device_funcs.device_connect(sw_dev, SW_CREDS2)
 
-            port_status = module_network_device_funcs.get_port_status(conn, vendor, module, port)
-            port_power_status = module_network_device_funcs.get_port_power_status(conn, vendor, module, port)
-            port_cabling_status = module_network_device_funcs.get_port_cabling(conn, vendor, module, port)
-            port_macs = module_network_device_funcs.get_port_macs(conn, vendor, module, port)
+        devices = module_network_device_funcs.discover_phones(conn, vendor, module)
+        conn.disconnect()
 
-            dev.switchport_status = port_status
-            dev.switchport_power_status = port_power_status
-            dev.switchport_cabling = port_cabling_status
-            dev.switchport_macs = port_macs
+        for dev in devices:
+            dev.insert(2, sw_dev)
+        all_devices.extend(devices)
     except:
-        print("device_connect_multithread -> Can not connect to switchport {} for {}\n".format(dev.switchport, dev.name))
+        print("device_connect_multithread -> Can not connect to switchport {} for {}\n".format(sw_dev.switchport, dev.name))
+
 
 ########################################################################################################################
 
@@ -44,7 +39,8 @@ def device_connect_multithread(dev):
 ########################################################################################################################
 data = json.load(open('../data/access.json'))
 
-UNREG_REPORT_FILE = '../data/output/report_devices_unregistered.txt'
+SWITCH_FILE = '../data/voip_switches.txt'                               # Windows
+# UNREG_REPORT_FILE = '../data/output/report_devices_unregistered.txt'
 
 # data = json.load(open('/home/pbx/cucm_ms/data/access.json'))  # Linux
 # DEVICE_REPORT_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/device_report.txt'
@@ -64,22 +60,45 @@ SW_CREDS = {'my_connection_type': str(data["switch"]["device_connection_type"]),
             'sw_verbose': str(data["switch"]["sw_verbose"])
             }
 
+SW_CREDS2 = {'my_connection_type': str(data["switch2"]["device_connection_type"]), \
+            'sw_username': str(data["switch2"]["sw_username"]), \
+            'sw_password': str(data["switch2"]["sw_password"]), \
+            'sw_enable': str(data["switch2"]["sw_enable"]), \
+            'sw_port': str(data["switch2"]["sw_port"]), \
+            'sw_verbose': str(data["switch2"]["sw_verbose"])
+            }
 
 
 ########################################################################################################################
 start = datetime.datetime.now()
 
-vendor = "dell"
-module = "0"
-conn = module_network_device_funcs.device_connect("100.100.100.110", SW_CREDS)
+all_devices = []
+try:
+    fd = open(SWITCH_FILE, "r")
+    switch_list = fd.read().splitlines()
+    fd.close()
+    print(switch_list)
+    # switch_list = ['100.100.100.110', '100.100.100.125']
 
-res1 = module_network_device_funcs.device_show_cmd(conn, "show version", vendor, module)
-res2 = module_network_device_funcs.get_device_model(conn, vendor, module)
+    threads = []
+    for sw_device in switch_list:
+        try:
+            process = Thread(target=device_connect_multithread, args=[sw_device])
+            process.start()
+            threads.append(process)
+        except:
+            continue
 
-conn.disconnect()
+    for process in threads:
+        process.join()
 
-print(res1)
-print(res2)
+except Exception as ex:
+    print(ex)
+
+
+for dev in all_devices:
+    print(dev)
+
 
 
 # ########################################################################################################################

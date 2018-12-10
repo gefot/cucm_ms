@@ -144,6 +144,44 @@ def get_switch_trunk_ports(connection, vendor, module):
 
 
 ########################################################################################################################
+def discover_phones(connection, vendor, module):
+    """
+    :param connection: switch connector
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
+
+    :return: [device name, interface]
+    """
+    try:
+        neighbor_devices = []
+
+        if vendor == "cisco":
+            pass
+        elif vendor == "dell":
+            command = "show isdp neighbors"
+            result = device_show_cmd(connection, command, vendor, module)
+            # for res int result:
+            #     neighbor_devices.append(res)
+            dev_list = result.split('\n')
+            for dev in dev_list:
+                # print(repr(dev))
+                try:
+                    entry = re.search(r'([SA][ET][PA][\w\d]+)\s+([\S]+)', dev)
+                    name= entry.group(1)
+                    interface = entry.group(2)
+                    temp_neighbor_device = [name, interface, module]
+                    neighbor_devices.append(temp_neighbor_device)
+                except:
+                    pass
+
+
+        return neighbor_devices
+
+    except Exception as ex:
+        print("discover_phones exception: ", ex.message)
+
+
+########################################################################################################################
 def get_switch_mac_table(connection, vendor, module):
     """
     :param connection: switch connector
