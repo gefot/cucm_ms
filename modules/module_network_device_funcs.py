@@ -150,13 +150,26 @@ def discover_phones(connection, vendor, module):
     :param vendor: eg. Cisco/Dell
     :param module: cluster/stack member number
 
-    :return: [device name, interface]
+    :return: [device name, interface, module]
     """
     try:
         neighbor_devices = []
 
         if vendor == "cisco":
-            pass
+            command = "show cdp neighbors"
+            result = device_show_cmd(connection, command, vendor, module)
+            dev_list = result.split('\n')
+            for dev in dev_list:
+                # print(repr(dev))
+                try:
+                    entry = re.search(r'([SA][ET][PA][\w\d]+)\s+([\S]+ [\S]+)', dev)
+                    name = entry.group(1).upper()
+                    interface = entry.group(2)
+                    temp_neighbor_device = [name, interface, module]
+                    neighbor_devices.append(temp_neighbor_device)
+                except:
+                    pass
+
         elif vendor == "dell":
             command = "show isdp neighbors"
             result = device_show_cmd(connection, command, vendor, module)
@@ -167,7 +180,7 @@ def discover_phones(connection, vendor, module):
                 # print(repr(dev))
                 try:
                     entry = re.search(r'([SA][ET][PA][\w\d]+)\s+([\S]+)', dev)
-                    name= entry.group(1)
+                    name = entry.group(1)
                     interface = entry.group(2)
                     temp_neighbor_device = [name, interface, module]
                     neighbor_devices.append(temp_neighbor_device)

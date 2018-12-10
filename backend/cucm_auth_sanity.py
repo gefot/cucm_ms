@@ -8,41 +8,39 @@ from modules import module_cucm_funcs, module_db_funcs, module_network_device_fu
 
 
 ########################################################################################################################
-def device_connect_multithread(sw_device):
+def device_connect_multithread(sw_dev):
 
     try:
-        if sw_device == "noc-clust-sw":
-            conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
+        if sw_dev == "noc-clust-sw":
+            conn = module_network_device_funcs.device_connect(sw_dev, RT_CREDS)
         else:
-            conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
+            conn = module_network_device_funcs.device_connect(sw_dev, SW_CREDS)
 
         modules = module_network_device_funcs.get_cisco_cluster_members(conn)
 
         for module in modules:
-            # Run 'show cdp neighbors' and get device and switchport
-            command = "show cdp neighbors"
             vendor = "cisco"
 
-            result = module_network_device_funcs.device_show_cmd(conn, command, vendor, module)
-            lines = result.split('\n')
-            for l in lines:
-                if re.match("^SEP", l) or re.match("^ATA", l):
-                    mac_address = re.search("(\w\w\w[\w\d]*)", l).group(1).upper()
-                    port = re.search(r'.*\/(\d+)\s', l).group(1)
-                    my_dev = [mac_address, sw_device + "-m" + module + "-p" + str(int(port))]
+            # Get CDP neighbors and construct the corresponding list
+            cdp_devices = module_network_device_funcs.discover_phones(conn, vendor, module)
+            if cdp_devices != []:
+                for dev in cdp_devices:
+                    dev.insert(2, sw_dev)
+                    # mac_address = re.search("[SA][ET][PA]([\w\d]+)", dev[0]).group(1)
+                    port = re.search(r'[\w]+ \S+/([\d]+)$', dev[1]).group(1)
+                    my_dev = [dev[0], sw_dev + "-m" + module + "-p" + str(int(port))]
                     switch_devices_table.append(my_dev)
 
             # Get switch full mac address table and keeps only voice MACs
-            device_model = module_network_device_funcs.get_device_model(conn, vendor, module)
             full_mac_table = module_network_device_funcs.get_switch_mac_table(conn, vendor, module)
             for mac_entry in full_mac_table:
                 if len(mac_entry[0]) == 3 and (mac_entry[0] == "111" or mac_entry[0].startswith('7')):
                     my_mac = (mac_entry[1].upper()).replace('.', '')
-                    my_dev = [mac_entry[0], my_mac, sw_device + "-m" + module + "-p" + str(int(mac_entry[2]))]
+                    my_dev = [mac_entry[0], my_mac, sw_dev + "-m" + module + "-p" + str(int(mac_entry[2]))]
                     voice_vlan_mac_table.append(my_dev)
         conn.disconnect()
     except:
-        print("device_connect_multithread -> Can not connect to device {}\n".format(sw_device))
+        print("device_connect_multithread -> Can not connect to device {}\n".format(sw_dev))
 
 
 
@@ -162,7 +160,7 @@ try:
     switch_list = fd.read().splitlines()
     fd.close()
     print(switch_list)
-    # switch_list = ["bld34fl02-sw", "noc-clust-sw", "bld61fl00-sw", "bld67cbsmnt-sw"]
+    # switch_list = ["bld34fl02-sw"]
 
     threads = []
     for sw_device in switch_list:
