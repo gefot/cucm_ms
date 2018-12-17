@@ -16,17 +16,23 @@ def db_connect(DB_CREDS):
         print("db_connect exception: ", ex)
         return None
 
+
 ########################################################################################################################
-# def execute_db_query(cursor, query):
-#     try:
-#         cursor.execute(query)
-#         rows = cur.fetchall()
-#
-#         return rows
-#
-#     except Exception as ex:
-#         print(ex)
-#         return None
+def execute_db_query(cursor, query):
+    """
+    :param cursor: database cursor
+    :param query: database query
+    :return: result
+    """
+    try:
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        return rows
+
+    except Exception as ex:
+        print("execute_db_query exception: ", ex)
+        return None
 
 
 ########################################################################################################################
@@ -51,18 +57,18 @@ def auth_fetch_from_db_per_dn(cursor, dn):
             if row[2] is None:
                 person_id = "unknown"
             else:
-                person_id = row[2]
+                person_id = str(row[2])
             if row[3] is None:
                 unit_id = "unknown"
             else:
-                unit_id = row[3]
+                unit_id = str(row[3])
             if row[4] is None:
                 access_outlet_id = "unknown"
             else:
-                access_outlet_id = row[4]
+                access_outlet_id = str(row[4])
 
         # Get username from person_id
-        if person_id is "unknown":
+        if person_id == "unknown":
             username = "unknown"
         else:
             query = "select username from person where id ='%s'" % person_id
@@ -70,7 +76,7 @@ def auth_fetch_from_db_per_dn(cursor, dn):
             row = cursor.fetchone()
             username = row[0]
 
-        # Get switchport info (node, module, port, poe) from access_outlet_id
+        # Get switchport info (node, module, port, poe) from access_ports
         if access_outlet_id == "unknown":
             switchport = "unknown"
             isPoE = "unknown"
@@ -85,9 +91,23 @@ def auth_fetch_from_db_per_dn(cursor, dn):
                 # my_switchport = [row[0], row[1], row[2], row[3]]
                 switchport = row[0] + '-m' + str(int(row[1])) + '-p' + str(int(row[2]))
                 isPoE = row[3]
-                # switchport = my_switchport
 
-        return username, unit_id, switchport, isPoE
+        # Get access_outlet_id info (status, usedFor) from access_outlet_id
+        if access_outlet_id == "unknown":
+            outlet_status = "unknown"
+            outlet_usedFor = "unknown"
+        else:
+            query = "select status, usedFor from access_outlets where id = '%s'" % access_outlet_id
+            cursor.execute(query)
+            row = cursor.fetchone()
+            if row is None:
+                outlet_status = "unknown"
+                outlet_usedFor = "unknown"
+            else:
+                outlet_status = str(row[0])
+                outlet_usedFor = str(row[1])
+
+        return username, unit_id, switchport, isPoE, access_outlet_id, outlet_status, outlet_usedFor
 
     except Exception as ex:
         print("fetch_from_db_per_dn exception: ", ex)

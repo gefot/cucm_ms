@@ -275,25 +275,25 @@ def cucm_get_translation_patterns(CM_CREDS):
 #     try:
 #         command = "SelectCmDevice"
 #
-#         if mac_address is not "":
+#         if mac_address !=  "":
 #             mac_address = "*" + mac_address + "*"
 #             item_name = mac_address
 #             query = {'SelectBy': 'Name', 'Status': 'Any', 'Class': 'Any',
 #                      'SelectItems': {'SelectItem': {'Item': item_name}}}
 #             result = cucm_risport(cmserver_hostname, cmport, soap_user, soap_pass, command, query)
-#         elif dn is not "":
+#         elif dn != "":
 #             dn = "*" + dn + "*"
 #             item_name = dn
 #             query = {'SelectBy': 'DirNumber', 'Status': 'Any', 'Class': 'Any',
 #                      'SelectItems': {'SelectItem': {'Item': item_name}}}
 #             result = cucm_risport(cmserver_hostname, cmport, soap_user, soap_pass, command, query)
-#         elif ip_address is not "":
+#         elif ip_address != "":
 #             ip_address = "*" + ip_address + "*"
 #             item_name = ip_address
 #             query = {'SelectBy': 'IpAddress', 'Status': 'Any', 'Class': 'Any',
 #                      'SelectItems': {'SelectItem': {'Item': item_name}}}
 #             result = cucm_risport(cmserver_hostname, cmport, soap_user, soap_pass, command, query)
-#         elif description is not "":
+#         elif description != "":
 #             description = "*" + description + "*"
 #             item_name = description
 #             query = {'SelectBy': 'Description', 'Status': 'Any', 'Class': 'Any',

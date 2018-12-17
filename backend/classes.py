@@ -20,6 +20,9 @@ class Phone:
 
         # DB
         self.responsible_person = "unknown"
+        self.outlet_id = "unknown"
+        self.outlet_status = "unknown"
+        self.outlet_usedFor = "unknown"
 
         # Networking
         self.switchport = "unknown"
@@ -37,12 +40,14 @@ class Phone:
         print("{}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, \
                                                   self.device_type, self.status, self.timestamp))
     def print_device_full(self):
-        print("{}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, \
-                                                          self.device_type, self.status, self.timestamp, \
-                                                          self.responsible_person, self.switchport))
+        print("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name,
+                                                                      self.device_type, self.status, self.timestamp,
+                                                                      self.responsible_person, self.outlet_id, self.outlet_status, self.outlet_usedFor, \
+                                                                      self.switchport))
 
     def print_device_full_net(self):
-        print("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, \
-                                                                          self.device_type, self.status, self.timestamp, self.responsible_person,\
-                                                                          self.switchport, self.switchport_status, self.switchport_power_status, \
-                                                                          self.switchport_cabling, self.switchport_found_mac, self.switchport_macs))
+        print("{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}".format(self.name, self.description, self.extension, self.alerting_name, \
+                                                                                  self.device_type, self.status, self.timestamp, \
+                                                                                  self.responsible_person, self.outlet_id, self.outlet_status, self.outlet_usedFor, \
+                                                                                  self.switchport, self.switchport_status, self.switchport_power_status,
+                                                                                  self.switchport_cabling, self.switchport_found_mac, self.switchport_macs))

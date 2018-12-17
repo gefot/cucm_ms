@@ -111,7 +111,7 @@ for dev in all_devices:
 #     for line in fd:
 #         if "Unregistered devices" in line:
 #             new_line = fd.readline().strip('\n')
-#             while new_line is not '':
+#             while new_line != '':
 #                 # print(repr(new_line))
 #                 device = new_line.split('\t\t')
 #                 # print("device=",device)
