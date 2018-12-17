@@ -8,7 +8,7 @@ from modules import module_cucm_funcs, module_db_funcs, module_network_device_fu
 
 
 ########################################################################################################################
-def device_connect_multithread(sw_dev):
+def get_cdp_mac_mthread(sw_dev):
 
     try:
         if sw_dev == "noc-clust-sw":
@@ -121,6 +121,9 @@ except Exception as ex:
     print(ex)
     exit(0)
 
+# Measure Script Execution
+print("\n--->Runtime After AXLAPI SQL query 2 = {} \n\n\n".format(datetime.datetime.now() - start))
+
 
 ########################################################################################################################
 # Fill in all_devices with database info
@@ -129,6 +132,7 @@ conn = ""
 try:
     conn = module_db_funcs.db_connect(DB_CREDS)
     cursor = conn.cursor()
+
     for dev in all_devices:
         my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.auth_fetch_from_db_per_dn(cursor, dev.extension)
         dev.responsible_person = my_username
@@ -136,7 +140,7 @@ try:
     conn.close()
 except Exception as ex:
     print(ex)
-    conn.disconnect()
+    conn.close()
     exit(0)
 
 
@@ -155,32 +159,32 @@ for dev in all_devices:
 switch_devices_table = []
 voice_vlan_mac_table = []
 
-try:
-    fd = open(SWITCH_FILE, "r")
-    switch_list = fd.read().splitlines()
-    fd.close()
-    print(switch_list)
-    # switch_list = ["bld34fl02-sw"]
-
-    threads = []
-    for sw_device in switch_list:
-        try:
-            print("\nConnecting to switch: ", sw_device)
-            process = Thread(target=device_connect_multithread, args=[sw_device])
-            process.start()
-            threads.append(process)
-        except:
-            continue
-
-    for process in threads:
-        process.join()
-
-    for device in switch_devices_table:
-        print(device)
-    for mac in voice_vlan_mac_table:
-        print(mac)
-except Exception as ex:
-    print(ex)
+# try:
+#     fd = open(SWITCH_FILE, "r")
+#     switch_list = fd.read().splitlines()
+#     fd.close()
+#     print(switch_list)
+#     # switch_list = ["bld34fl02-sw"]
+#
+#     threads = []
+#     for sw_device in switch_list:
+#         try:
+#             print("\nConnecting to switch: ", sw_device)
+#             process = Thread(target=get_cdp_mac_mthread, args=[sw_device])
+#             process.start()
+#             threads.append(process)
+#         except:
+#             continue
+#
+#     for process in threads:
+#         process.join()
+#
+#     for device in switch_devices_table:
+#         print(device)
+#     for mac in voice_vlan_mac_table:
+#         print(mac)
+# except Exception as ex:
+#     print(ex)
 
 # Measure Script Execution
 print("\n--->Runtime After Accessing Switches = {} \n\n\n".format(datetime.datetime.now() - start))
