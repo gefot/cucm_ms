@@ -52,7 +52,7 @@ print("\n--->Runtime After AXLAPI SQL query = {} \n\n\n".format(datetime.datetim
 try:
     module_cucm_funcs.cucm_fill_device_status(CM_PUB_CREDS, all_devices)
     # Sort Phone list by registration timestamp
-    all_devices.sort(key=lambda x: x.description, reverse=False)
+    all_devices.sort(key=lambda x: x.timestamp, reverse=True)
 except Exception as ex:
     print(ex)
     exit(0)
