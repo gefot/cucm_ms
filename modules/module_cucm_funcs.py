@@ -1,6 +1,8 @@
 
 import datetime
 import ssl
+from pathlib import Path
+import os
 
 from backend import classes
 
@@ -25,8 +27,8 @@ def cucm_axl_query(CM_CREDS, command, query):
     """
 
     try:
-        # my_path = '../data/'                                                          # Windows
-        my_path = '/home/gfot/cucm_ms/data/'                                            # Linux
+        my_path = '/' + str(Path(os.getcwd()).parent).replace('\\', '/') + '/data/'       # Windows
+        # my_path = '/home/gfot/cucm_ms/data/'                                            # Linux
 
         wsdl_file_location = 'file://{}AXLAPI.wsdl'.format(my_path)
 

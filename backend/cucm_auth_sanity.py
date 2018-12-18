@@ -65,13 +65,13 @@ def get_cdp_mac_mthread(sw_dev):
 # Constant Variables
 ########################################################################################################################
 
-# data = json.load(open('../data/access.json'))                       # Windows
-# SWITCH_FILE = '../data/voip_switches.txt'
-# MAIL_FILE = '../data/output/report_sanity_security.txt'
+data = json.load(open('../data/access.json'))                       # Windows
+SWITCH_FILE = '../data/voip_switches.txt'
+MAIL_FILE = '../data/output/report_sanity_security.txt'
 
-data = json.load(open('/home/gfot/cucm_ms/data/access.json'))       # Linux
-SWITCH_FILE = '/home/gfot/cucm_ms/data/voip_switches.txt'
-MAIL_FILE = '/home/gfot/cucm_ms/data/output/report_sanity_security.txt'
+# data = json.load(open('/home/gfot/cucm_ms/data/access.json'))       # Linux
+# SWITCH_FILE = '/home/gfot/cucm_ms/data/voip_switches.txt'
+# MAIL_FILE = '/home/gfot/cucm_ms/data/output/report_sanity_security.txt'
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'cm_server_ip_address': str(data["cucm"]["pub_ip_address"]), \
@@ -216,6 +216,7 @@ try:
 
 except Exception as ex:
     print(ex)
+    exit(0)
 
 # Measure Script Execution
 print("\n--->Runtime After Accessing Switches = {} \n\n\n".format(datetime.datetime.now() - start))
@@ -256,8 +257,6 @@ except Exception as ex:
 
 
 # Database Check
-# excluded_extensions = ['']
-excluded_extensions = ['99999']
 db_body = ""
 try:
     for dev in all_devices:
@@ -317,20 +316,24 @@ except Exception as ex:
 # Security Check
 # Excluded MACs: cvoice-rc-gw, 5x RC IP Phones registered at the old CUCM, old CUCMs, EIKASTIKES2 ATA
 # excluded_macs = ['']
-excluded_macs = ['C89C1D492B50', '000C2905DB8B', '000C291D59FB', '000C2950DF27', '000C31E9F121', 'C89C1D893390', 'E41F13252289', 'E41F1325280B', '34DBFD1835D9']
-
+excluded_macs = ['C89C1D492B50', '000C2905DB8B', '000C291D59FB', '000C2950DF27', '000C31E9F121', 'C89C1D893390', 'E41F13252289', \
+                 'E41F1325280B', '34DBFD1835D9']
 security_body = ""
-for mac in voice_vlan_mac_table:
-    found = False
-    for device1 in all_devices:
-        if mac[1] in device1.mac or mac[1] in excluded_macs:
-            found = True
+try:
+    for mac in voice_vlan_mac_table:
+        found = False
+        for device1 in all_devices:
+            if mac[1] in device1.mac or mac[1] in excluded_macs:
+                found = True
 
-    if found:
-        pass
-    else:
-        security_body += "Ilegal MAC address %s at switchport %s in vlan %s\n" % (mac[1], mac[2], mac[0])
+        if found:
+            pass
+        else:
+            security_body += "Ilegal MAC address %s at switchport %s in vlan %s\n" % (mac[1], mac[2], mac[0])
 
+except Exception as ex:
+    print(ex)
+    exit(0)
 
 # Measure Script Execution
 print("\n--->Runtime After Processing = {} \n\n\n".format(datetime.datetime.now()-start))
