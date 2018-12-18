@@ -12,6 +12,7 @@ def device_connect(my_device, SW_CREDS):
 
     :return: switch connector
     """
+
     try:
         dev = dict(ip=my_device, device_type=SW_CREDS['my_connection_type'], username=SW_CREDS['sw_username'], \
                    password=SW_CREDS['sw_password'], secret=SW_CREDS['sw_enable'], \
@@ -35,6 +36,7 @@ def device_show_cmd(conn, command, vendor, module):
 
     :return: output of the the CLI show command
     """
+
     try:
         show_output = ""
 
@@ -65,6 +67,7 @@ def get_device_model(conn, vendor, module):
 
     :return: device model (eg. WS-C2950C-24)
     """
+
     try:
         device_model = ""
 
@@ -91,6 +94,7 @@ def get_cisco_cluster_members(conn):
 
     :return: list of switch cluster members, eg [0,1,2,3] or ['0'] if none
     """
+
     try:
         command = "show cluster members"
         vendor = "cisco"
@@ -121,6 +125,7 @@ def get_switch_trunk_ports(connection, vendor, module):
 
     :return: trunk interface list, eg. ['Fa0/1', 'Gi0/2']
     """
+
     try:
         trunk_ports = []
 
@@ -152,6 +157,7 @@ def discover_phones(connection, vendor, module):
 
     :return: [device name, interface, module]
     """
+
     try:
         neighbor_devices = []
 
@@ -203,6 +209,7 @@ def get_switch_mac_table(connection, vendor, module):
 
     :return: [vlan, mac address, port]
     """
+
     try:
         mac_entry_list = []
 
@@ -246,6 +253,7 @@ def get_port_label(vendor, device_model):
 
     :return: the preceding port label (eg. "Fa0/")depending on switch model
     """
+
     try:
         port_label = ""
 
@@ -278,6 +286,7 @@ def get_port_status(connection, vendor, module, port):
 
     :return: port status (up/down)
     """
+
     try:
         port_status = ""
 
@@ -310,6 +319,7 @@ def get_port_power_status(connection, vendor, module, port):
 
     :return: port power status
     """
+
     try:
         port_power = ""
 
@@ -351,6 +361,7 @@ def get_port_cabling(connection, vendor, module, port):
 
     :return: cabling diagnostics
     """
+
     try:
         port_cabling = ""
 
@@ -385,6 +396,7 @@ def get_port_macs(connection, vendor, module, port):
 
     :return: cabling diagnostics
     """
+
     try:
         mac_list = ""
 

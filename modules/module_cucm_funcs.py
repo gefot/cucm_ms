@@ -1,10 +1,8 @@
 
 import datetime
-import os
 import ssl
-from pathlib import Path
 
-from backend.classes import Phone
+from backend import classes
 
 from suds.xsd.doctor import Import          # suds-jurko
 from suds.xsd.doctor import ImportDoctor    # suds-jurko
@@ -25,8 +23,11 @@ def cucm_axl_query(CM_CREDS, command, query):
     :param query:
     :return: client
     """
+
     try:
-        my_path = '/' + str(Path(os.getcwd()).parent).replace('\\', '/') + '/data/'     # Windows
+        # my_path = '../data/'                                                          # Windows
+        my_path = '/home/gfot/cucm_ms/data/'                                            # Linux
+
         wsdl_file_location = 'file://{}AXLAPI.wsdl'.format(my_path)
 
         tns = 'http://schemas.cisco.com/ast/soap/'
@@ -66,6 +67,7 @@ def cucm_ris_query(CM_CREDS, command, query):
     :param query: the query itself
     :return: client
     """
+
     try:
         tns = 'http://schemas.cisco.com/ast/soap/'
         imp = Import('http://schemas.xmlsoap.org/soap/encoding/', 'http://schemas.xmlsoap.org/soap/encoding/')
@@ -95,6 +97,7 @@ def cucm_get_configured_devices(CM_CREDS):
     :param CM_CREDS: CUCM credentials
     :return: a list of Phone objects; populates: (mac_address,description,device type,extension,alerting name)
     """
+
     try:
         sql_query = "select a.name, a.description, b.dnorpattern, b.alertingname, c.display, d.name as type from device as a, \
         numplan as b, devicenumplanmap as c, typemodel as d where c.fkdevice = a.pkid and c.fknumplan = b.pkid and \
@@ -107,7 +110,7 @@ def cucm_get_configured_devices(CM_CREDS):
         for dev in device_list_full_axl:
             # if dev.name.startswith(("SEP", "ATA", "AALN", "AN", "CSF")):
             if dev.name.startswith(("SEP", "ATA", "AALN", "AN")):
-                temp_dev = Phone(str(dev.name), str(dev.description), str(dev.dnorpattern), str(dev.alertingname))
+                temp_dev = classes.Phone(str(dev.name), str(dev.description), str(dev.dnorpattern), str(dev.alertingname))
                 temp_dev.device_type = str(dev.type)
                 all_configured_devices.append(temp_dev)
             else:
@@ -126,6 +129,7 @@ def cucm_count_interering_devices(devices):
     :param devices: list of Phone objects
     :return: a list of integers: [Total Devices, IP Phones, ATA devices, ATA ports, Analog]
     """
+
     try:
         device_count = [0] * 6
         for device in devices:
@@ -158,6 +162,7 @@ def cucm_fill_device_status(CM_CREDS, all_devices):
     :param all_devices: cucm devices
     :return: Nothing! It polutates the list of Phone objects with: (status, timestamp)
     """
+
     try:
         command = "SelectCmDevice"
         query = {'SelectBy': 'Name', 'Status': 'Any', 'Class': 'Any', 'MaxReturnedDevices': '5000'}
@@ -190,6 +195,7 @@ def cucm_get_translation_patterns(CM_CREDS):
     :param CM_CREDS: CUCM Credentials
     :return: dictionary of all CUCM translation patterns
     """
+
     try:
         sql_query = "select n.dnorpattern, n.calledpartytransformationmask from numplan n where n.calledpartytransformationmask <> ''"
 

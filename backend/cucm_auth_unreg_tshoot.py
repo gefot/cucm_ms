@@ -1,10 +1,14 @@
 
+import sys
+# This is needed so as to be run on CLI
+sys.path.append('/home/gfot/cucm_ms')
+
 import json
 import datetime
 import re
 from threading import Thread
 
-from backend.classes import Phone
+from backend import classes
 from modules import module_cucm_funcs, module_db_funcs, module_network_device_funcs
 
 
@@ -42,12 +46,11 @@ def device_connect_multithread(dev):
 ########################################################################################################################
 # Constant Variables
 ########################################################################################################################
-data = json.load(open('../data/access.json'))
+# data = json.load(open('../data/access.json'))                 # Windows
+# UNREG_REPORT_FILE = '../data/output/report_devices_unregistered.txt'
 
-UNREG_REPORT_FILE = '../data/output/report_devices_unregistered.txt'
-
-# data = json.load(open('/home/pbx/cucm_ms/data/access.json'))  # Linux
-# DEVICE_REPORT_FILE = '/stats/mrtg/scripts/voip_stats/cucm_ms/output/device_report.txt'
+data = json.load(open('/home/gfot/cucm_ms/data/access.json'))  # Linux
+UNREG_REPORT_FILE = '/home/gfot/cucm_ms/data/output/report_devices_unregistered.txt'
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'cm_server_ip_address': str(data["cucm"]["pub_ip_address"]), \
@@ -96,7 +99,7 @@ try:
                 # print(repr(new_line))
                 device = new_line.split('\t\t')
                 # print("device=",device)
-                temp_dev = Phone(device[0], device[3], device[1], device[4])
+                temp_dev = classes.Phone(device[0], device[3], device[1], device[4])
                 unreg_devices.append(temp_dev)
                 new_line = fd.readline().strip('\n')
     fd.close()
@@ -128,7 +131,7 @@ try:
     conn = module_db_funcs.db_connect(DB_CREDS)
     cursor = conn.cursor()
     for dev in unreg_devices:
-        my_username, my_unit_id, my_switchport, my_isPoE = module_db_funcs.auth_fetch_from_db_per_dn(cursor, dev.extension)
+        my_username, my_unit_id, my_switchport, my_isPoE, my_access_outlet_id, my_outlet_status, my_outlet_usedFor = module_db_funcs.auth_fetch_from_db_per_dn(cursor, dev.extension)
         dev.responsible_person = my_username
         dev.switchport = my_switchport
     conn.close()

@@ -1,9 +1,10 @@
-import json
-import datetime
-import sys
 
+import sys
 # This is needed so as to be run on CLI
 sys.path.append('/home/gfot/cucm_ms')
+
+import json
+import datetime
 
 from modules import module_cucm_funcs
 
@@ -11,6 +12,7 @@ from modules import module_cucm_funcs
 ########################################################################################################################
 # Constant Variables
 ########################################################################################################################
+
 # data = json.load(open('../data/access.json'))                 # Windows
 # REPORT_FILE_1 = '../data/output/report_devices.txt'
 # REPORT_FILE_2 = '../data/output/report_devices_unregistered.txt'

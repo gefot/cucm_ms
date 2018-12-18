@@ -50,3 +50,4 @@ class Phone:
                                                                                   self.responsible_person, self.outlet_id, self.outlet_status, self.outlet_usedFor, \
                                                                                   self.switchport, self.switchport_status, self.switchport_power_status,
                                                                                   self.switchport_cabling, self.switchport_found_mac, self.switchport_macs))
+

@@ -1,13 +1,12 @@
 
+import sys
+# This is needed so as to be run on CLI
+sys.path.append('/home/gfot/cucm_ms')
+
 import json
 import datetime
 import re
 from threading import Thread
-
-import sys
-
-# This is needed so as to be run on CLI
-sys.path.append('/home/gfot/cucm_ms')
 
 from modules import module_cucm_funcs, module_db_funcs, module_network_device_funcs
 
@@ -66,9 +65,9 @@ def get_cdp_mac_mthread(sw_dev):
 # Constant Variables
 ########################################################################################################################
 
-data = json.load(open('../data/access.json'))                       # Windows
-SWITCH_FILE = '../data/voip_switches.txt'
-MAIL_FILE = '../data/output/report_sanity_security.txt'
+# data = json.load(open('../data/access.json'))                       # Windows
+# SWITCH_FILE = '../data/voip_switches.txt'
+# MAIL_FILE = '../data/output/report_sanity_security.txt'
 
 data = json.load(open('/home/gfot/cucm_ms/data/access.json'))       # Linux
 SWITCH_FILE = '/home/gfot/cucm_ms/data/voip_switches.txt'

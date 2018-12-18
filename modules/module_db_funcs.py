@@ -8,6 +8,7 @@ def db_connect(DB_CREDS):
     :param DB_CREDS: database credentials
     :return: database connector
     """
+
     try:
         conn = mariadb.connect(DB_CREDS['db_host'], DB_CREDS['db_username'], DB_CREDS['db_password'], DB_CREDS['db_name'])
         return conn
@@ -24,6 +25,7 @@ def execute_db_query(cursor, query):
     :param query: database query
     :return: result
     """
+
     try:
         cursor.execute(query)
         rows = cursor.fetchall()
@@ -42,6 +44,7 @@ def auth_fetch_from_db_per_dn(cursor, dn):
     :param dn: extension
     :return: [name, unit_id, switchport, isPoE]
     """
+
     try:
         # Get person_id, unit_id, access_outlet_id
         query = "select name, macaddress, assigned_to_person, assigned_to_unit, access_outlet_id from tel_extensions where number = '{}'".format(dn)
