@@ -4,6 +4,11 @@ import datetime
 import re
 from threading import Thread
 
+import sys
+
+# This is needed so as to be run on CLI
+sys.path.append('/home/gfot/cucm_ms')
+
 from modules import module_cucm_funcs, module_db_funcs, module_network_device_funcs
 
 
