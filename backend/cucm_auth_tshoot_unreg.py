@@ -47,13 +47,13 @@ def tshoot_device_mthread(dev):
 # Constant Variables
 ########################################################################################################################
 
-data = json.load(open('../data/access.json'))                 # Windows
-UNREG_REPORT_FILE = '../data/output/report_devices_unregistered.txt'
-TSHOOT_REPORT_FILE = '../data/output/report_tshoot_unregistered.txt'
+# data = json.load(open('../data/access.json'))                 # Windows
+# UNREG_REPORT_FILE = '../data/output/report_devices_unregistered.txt'
+# TSHOOT_REPORT_FILE = '../data/output/report_tshoot_unregistered.txt'
 
-# data = json.load(open('/home/gfot/cucm_ms/data/access.json'))  # Linux
-# UNREG_REPORT_FILE = '/home/gfot/cucm_ms/data/output/report_devices_unregistered.txt'
-# TSHOOT_REPORT_FILE = '/home/gfot/cucm_ms/data/output/report_tshoot_unregistered.txt'
+data = json.load(open('/home/gfot/cucm_ms/data/access.json'))  # Linux
+UNREG_REPORT_FILE = '/home/gfot/cucm_ms/data/output/report_devices_unregistered.txt'
+TSHOOT_REPORT_FILE = '/home/gfot/cucm_ms/data/output/report_tshoot_unregistered.txt'
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'cm_server_ip_address': str(data["cucm"]["pub_ip_address"]), \

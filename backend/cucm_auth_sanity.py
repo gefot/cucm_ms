@@ -65,13 +65,13 @@ def get_cdp_mac_mthread(sw_dev):
 # Constant Variables
 ########################################################################################################################
 
-data = json.load(open('../data/access.json'))                       # Windows
-SWITCH_FILE = '../data/voip_switches.txt'
-MAIL_FILE = '../data/output/report_sanity_security.txt'
+# data = json.load(open('../data/access.json'))                       # Windows
+# SWITCH_FILE = '../data/voip_switches.txt'
+# MAIL_FILE = '../data/output/report_sanity_security.txt'
 
-# data = json.load(open('/home/gfot/cucm_ms/data/access.json'))       # Linux
-# SWITCH_FILE = '/home/gfot/cucm_ms/data/voip_switches.txt'
-# MAIL_FILE = '/home/gfot/cucm_ms/data/output/report_sanity_security.txt'
+data = json.load(open('/home/gfot/cucm_ms/data/access.json'))       # Linux
+SWITCH_FILE = '/home/gfot/cucm_ms/data/voip_switches.txt'
+MAIL_FILE = '/home/gfot/cucm_ms/data/output/report_sanity_security.txt'
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'cm_server_ip_address': str(data["cucm"]["pub_ip_address"]), \
