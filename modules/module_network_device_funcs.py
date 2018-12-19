@@ -27,9 +27,9 @@ def device_connect(my_device, SW_CREDS):
 
 
 ########################################################################################################################
-def device_show_cmd(conn, command, vendor, module):
+def device_show_cmd(connection, command, vendor, module):
     """
-    :param conn: switch connector
+    :param connection: switch connector
     :param command: CLI command
     :param vendor: eg. Cisco/Dell
     :param module: cluster/stack member number
@@ -42,15 +42,17 @@ def device_show_cmd(conn, command, vendor, module):
 
         if vendor == "cisco":
             if module == "0":
-                show_output = conn.send_command(command)
+                show_output = connection.send_command(command)
             else:
-                conn.send_command("rcommand " + module, auto_find_prompt=False)
+                connection.send_command("rcommand " + module, auto_find_prompt=False)
                 # print(connection.find_prompt())
-                show_output = conn.send_command(command)
-                conn.send_command("exit", auto_find_prompt=False)
+                show_output = connection.send_command(command)
+                # Use delay factor to ensure netmiko properly exits from member switch
+                connection.send_command("exit", auto_find_prompt=False, delay_factor=2)
+
         elif vendor == "dell":
-            conn.send_command("terminal length 0\n",delay_factor=2)
-            show_output = conn.send_command(command, delay_factor=2)
+            connection.send_command("terminal length 0\n", delay_factor=2)
+            show_output = connection.send_command(command, delay_factor=2)
 
         return show_output
 
@@ -59,9 +61,9 @@ def device_show_cmd(conn, command, vendor, module):
 
 
 ########################################################################################################################
-def get_device_model(conn, vendor, module):
+def get_device_model(connection, vendor, module):
     """
-    :param conn: switch connector
+    :param connection: switch connector
     :param vendor: eg. Cisco/Dell
     :param module: cluster/stack member number
 
@@ -73,11 +75,12 @@ def get_device_model(conn, vendor, module):
 
         if vendor == "cisco":
             command = "show version"
-            result = device_show_cmd(conn, command, vendor, module)
+            result = device_show_cmd(connection, command, vendor, module)
             device_model = re.search(r'cisco (WS\-[\d\w\-\+]*)',result).group(1)
+
         elif vendor == "dell":
             command = "show version"
-            result = device_show_cmd(conn, command, vendor, module)
+            result = device_show_cmd(connection, command, vendor, module)
             device_model = re.search(r'System Model ID\.+ ([\w\d]+)', result).group(1)
 
 
@@ -88,9 +91,9 @@ def get_device_model(conn, vendor, module):
 
 
 ########################################################################################################################
-def get_cisco_cluster_members(conn):
+def get_cisco_cluster_members(connection):
     """
-    :param conn: switch connector
+    :param connection: switch connector
 
     :return: list of switch cluster members, eg [0,1,2,3] or ['0'] if none
     """
@@ -99,7 +102,7 @@ def get_cisco_cluster_members(conn):
         command = "show cluster members"
         vendor = "cisco"
         module = "0"
-        result = device_show_cmd(conn, command, vendor, module)
+        result = device_show_cmd(connection, command, vendor, module)
 
         modules = []
         lines = re.split('\n', result)
@@ -269,7 +272,6 @@ def get_port_label(vendor, device_model):
             else:
                 port_label = "Fa0/"
 
-
         return port_label
 
     except Exception as ex:
@@ -344,7 +346,6 @@ def get_port_power_status(connection, vendor, module, port):
             else:
                 port_power = "PoE Injector"
 
-
         return port_power
 
     except Exception as ex:
@@ -369,16 +370,16 @@ def get_port_cabling(connection, vendor, module, port):
             device_model = get_device_model(connection, vendor, module)
             port_label = get_port_label(vendor, device_model)
 
-            if re.search('WS-C2960',device_model):
+            if re.search('WS-C2960', device_model):
                 command = "test cable-diagnostics tdr interface " + port_label + port
                 result = device_show_cmd(connection, command, vendor, module)
-                time.sleep(1)
+                # If this time is less it disrupts proper access to conn connector for following commands
+                time.sleep(3)
                 command = "show cable-diagnostics tdr interface " + port_label + port
                 result = device_show_cmd(connection, command, vendor, module)
-                port_cabling = re.search(r'(Fa|Gi)[\w\d\/\s\+\-]*',result).group()
+                port_cabling = re.search(r'(Fa|Gi)[\w\d\/\s\+\-]*', result).group()
             else:
                 port_cabling = "Not Supported"
-
 
         return port_cabling
 
@@ -403,21 +404,80 @@ def get_port_macs(connection, vendor, module, port):
         if vendor == "cisco":
             device_model = get_device_model(connection, vendor, module)
             port_label = get_port_label(vendor, device_model)
-            if re.search('WS-C2950',device_model):
+            if re.search('WS-C2950', device_model):
                 command = "show mac-address-table interface " + port_label + port
             else:
                 command = "show mac address-table interface " + port_label + port
 
             result = device_show_cmd(connection, command, vendor, module)
-            mac_list = re.findall("[\w\d]+\.[\w\d]+\.[\w\d]+", result)
-            for i,my_mac in enumerate(mac_list):
+            mac_list = re.findall(r'[\w\d]+\.[\w\d]+\.[\w\d]+', result)
+            for i, my_mac in enumerate(mac_list):
                 mac_list[i] = (my_mac.replace('.','')).upper()
-
 
         return mac_list
 
     except Exception as ex:
         print("get_port_macs exception: ", ex.message)
+
+
+########################################################################################################################
+########################################################################################################################
+def device_conft_cmd(connection, command, vendor, module):
+    """
+    :param connection: switch connector
+    :param command: CLI command
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
+
+    :return: output of the the CLI "conf t" command
+    """
+
+    try:
+        conft_output = ""
+
+        if vendor == "cisco":
+            if module == "0":
+                print(command)
+                conft_output = connection.send_config_set(command, delay_factor=2)
+            else:
+                print(command)
+                conft_output = connection.send_command("rcommand " + module, auto_find_prompt=False)
+                # Verify that member switch is accessed properly
+                if conft_output == "":
+                    conft_output = connection.send_config_set(command, delay_factor=2)
+                    # Use delay factor to ensure netmiko properly exits from member switch
+                    connection.send_command("exit", auto_find_prompt=False, delay_factor=2)
+
+        return conft_output
+
+    except Exception as ex:
+        print("device_conft_cmd exception: ", ex.message)
+
+
+########################################################################################################################
+def conf_flap_port(connection, vendor, module, port):
+    """
+    :param connection: switch connector
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
+    :param port: port number
+
+    :return: nothing
+    """
+
+    try:
+        if vendor == "cisco":
+            device_model = get_device_model(connection, vendor, module)
+            port_label = get_port_label(vendor, device_model)
+
+            command = ['interface ' + port_label + port, 'shut']
+            result = device_conft_cmd(connection, command, vendor, module)
+            command = ['interface ' + port_label + port, 'no shut']
+            result = device_conft_cmd(connection, command, vendor, module)
+
+
+    except Exception as ex:
+        print("conf_flap_port exception: ", ex.message)
 
 
 ########################################################################################################################

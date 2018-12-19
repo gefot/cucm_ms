@@ -13,10 +13,11 @@ from modules import module_cucm_funcs, module_db_funcs, module_network_device_fu
 
 
 ########################################################################################################################
-def tshoot_device_mthread(dev):
+def tshoot_device_mthread(my_dev):
     try:
         if dev.switchport != "unknown":
-            m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d+)", dev.switchport)
+            # print("---> In tshoot_device_mthread:", sw_device, module, port)
+            m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d+)", my_dev.switchport)
             sw_device = m.group(1)
             module = m.group(2)
             port = m.group(3)
@@ -30,15 +31,20 @@ def tshoot_device_mthread(dev):
 
             port_status = module_network_device_funcs.get_port_status(conn, vendor, module, port)
             port_power_status = module_network_device_funcs.get_port_power_status(conn, vendor, module, port)
-            port_cabling_status = module_network_device_funcs.get_port_cabling(conn, vendor, module, port)
             port_macs = module_network_device_funcs.get_port_macs(conn, vendor, module, port)
+            # If port_cabling_status is run can result in MAC being lost for some time (even 10secs)
+            port_cabling_status = module_network_device_funcs.get_port_cabling(conn, vendor, module, port)
 
-            dev.switchport_status = port_status
-            dev.switchport_power_status = port_power_status
-            dev.switchport_cabling = port_cabling_status
-            dev.switchport_macs = port_macs
+            my_dev.switchport_status = port_status
+            my_dev.switchport_power_status = port_power_status
+            my_dev.switchport_macs = port_macs
+            my_dev.switchport_cabling = port_cabling_status
+
+            if my_dev.mac in port_macs:
+                my_dev.switchport_found_mac = "Yes"
     except:
-        print("device_connect_multithread -> Can not connect to switchport {} for {}\n".format(dev.switchport, dev.name))
+        print("device_connect_multithread -> Can not connect to switchport {} for {}\n".format(my_dev.switchport, my_dev.name))
+
 
 ########################################################################################################################
 
@@ -157,7 +163,6 @@ try:
             process = Thread(target=tshoot_device_mthread, args=[dev])
             process.start()
             threads.append(process)
-
         except:
             continue
 except Exception as ex:
@@ -169,6 +174,8 @@ for process in threads:
 
 print("\n\n\n\n\n")
 for dev in unreg_devices:
+    if dev.switchport_found_mac == "Yes":
+        print("I need restart tshoot for this device")
     dev.print_device_full_net()
 
 
@@ -215,8 +222,6 @@ TDR: %s
 except Exception as ex:
     print(ex)
     exit(0)
-
-
 
 
 # Measure Script Execution
