@@ -27,7 +27,6 @@ CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'soap_pass': str(data["cucm"]["soap_pass"])
                 }
 
-
 ########################################################################################################################
 start = datetime.datetime.now()
 

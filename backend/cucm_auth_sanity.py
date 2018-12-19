@@ -71,7 +71,7 @@ def get_cdp_mac_mthread(sw_dev):
 
 data = json.load(open('/home/gfot/cucm_ms/data/access.json'))       # Linux
 SWITCH_FILE = '/home/gfot/cucm_ms/data/voip_switches.txt'
-MAIL_FILE = '/home/gfot/cucm_ms/data/output/report_sanity_security.txt'
+REPORT_FILE = '/home/gfot/cucm_ms/data/output/report_sanity_security.txt'
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \
                 'cm_server_ip_address': str(data["cucm"]["pub_ip_address"]), \
@@ -230,7 +230,7 @@ print("\n--->Runtime After Accessing Switches = {} \n\n\n".format(datetime.datet
 ########################################################################################################################
 # Sanity Check
 # excluded_extensions = ['']
-excluded_extensions = ['99999', '91822', '91839']   # Exclude these extensions from the check
+excluded_extensions = ['91822', '91839']   # Exclude these extensions from the check
 sanity_body = ""
 try:
     for my_device1 in all_devices:
@@ -342,7 +342,7 @@ print("\n--->Runtime After Processing = {} \n\n\n".format(datetime.datetime.now(
 ################################################################################
 # Construct report file
 ################################################################################
-mail_body = """
+report_body = """
 ------------------------------------------------------------------------------------------------------------------------
 Sanity check:
 
@@ -366,11 +366,11 @@ Security check:
 ------------------------------------------------------------------------------------------------------------------------
 """ % (sanity_body, db_body, db_body2, security_body)
 
-print(mail_body)
+print(report_body)
 
-if sanity_body or security_body:
-    target = open(MAIL_FILE, "w")
-    target.write(mail_body)
+if report_body:
+    target = open(REPORT_FILE, "w")
+    target.write(report_body)
     target.close()
 
 
