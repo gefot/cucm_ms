@@ -13,11 +13,11 @@ from modules import module_cucm_funcs
 ########################################################################################################################
 
 # data = json.load(open('../data/access.json'))                 # Windows
-# REPORT_FILE_1 = '../data/output/report_devices.txt'
+# REPORT_FILE_1 = '../data/output/report_devices_full.txt'
 # REPORT_FILE_2 = '../data/output/report_devices_unregistered.txt'
 
 data = json.load(open('/home/gfot/cucm_ms/data/access.json'))  # Linux
-REPORT_FILE_1 = '/home/gfot/cucm_ms/data/output/report_devices.txt'
+REPORT_FILE_1 = '/home/gfot/cucm_ms/data/output/report_devices_full.txt'
 REPORT_FILE_2 = '/home/gfot/cucm_ms/data/output/report_devices_unregistered.txt'
 
 CM_PUB_CREDS = {'cm_server_hostname': str(data["cucm"]["pub_hostname"]), \

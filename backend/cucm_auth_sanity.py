@@ -230,7 +230,7 @@ print("\n--->Runtime After Accessing Switches = {} \n\n\n".format(datetime.datet
 ########################################################################################################################
 # Sanity Check
 # excluded_extensions = ['']
-excluded_extensions = ['99999']   # Exclude these extensions from the check
+excluded_extensions = ['99999', '91822', '91839']   # Exclude these extensions from the check
 sanity_body = ""
 try:
     for my_device1 in all_devices:
