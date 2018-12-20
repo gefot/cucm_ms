@@ -1,5 +1,6 @@
 
 import sys
+import os
 # This is needed so as to be run on CLI
 sys.path.append('/home/gfot/cucm_ms')
 
@@ -172,15 +173,39 @@ except Exception as ex:
 for process in threads:
     process.join()
 
+########################################################################################################################
+# Check if any device needs be restarted
+########################################################################################################################
 print("\n\n\n\n\n")
 for dev in unreg_devices:
     if dev.switchport_found_mac == "Yes":
-        print("I need restart tshoot for this device")
-    dev.print_device_full_net()
+        # dev.print_device_full_net()
+        m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d+)", dev.switchport)
+        sw_device = m.group(1)
+        module = m.group(2)
+        port = m.group(3)
+        print("Restarting device {} - {} - {}".format(sw_device, module, port))
+        if sw_device == "noc-clust-sw":
+            conn = module_network_device_funcs.device_connect(sw_device, RT_CREDS)
+        else:
+            conn = module_network_device_funcs.device_connect(sw_device, SW_CREDS)
 
+        vendor = "cisco"
+
+        module_network_device_funcs.conf_flap_port(conn, vendor, module, port)
+
+        # Send e-mail
+        SUBJECT = "CUCM - Device Troubleshoot - Restarting device"
+        # RECEPIENT = "gfot@it.auth.gr"
+        RECEPIENT = "gfot@it.auth.gr, kgots@it.auth.gr"
+        # RECEPIENT = "anemostaff@it.auth.gr"
+        BODY = "Device shows as unregistered, but the correct MAC address is found at switchport.\n\n" \
+                "Restating device {} - {}".format(dev.extension, dev.name)
+        command = "echo \"{}\" | /usr/bin/mail -s \"{}\" {}".format(BODY, SUBJECT, RECEPIENT)
+        os.system(command)
 
 # Measure Script Execution
-print("\n--->Runtime After Tshoot Section = {} \n\n\n".format(datetime.datetime.now() - start))
+print("\n--->Runtime After Restart Section = {} \n\n\n".format(datetime.datetime.now() - start))
 
 
 ########################################################################################################################

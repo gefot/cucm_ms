@@ -53,7 +53,7 @@ def get_cdp_mac_mthread(sw_dev):
         db_conn.close()
         for row in rows:
             if row[0] != "" and row[0] is not None:
-                voice_access_outlet_ids.append(str(row[0]))
+                data_access_outlet_ids.append(str(row[0]))
 
 
 
@@ -178,7 +178,7 @@ for dev in all_devices:
 ########################################################################################################################
 switch_devices_table = []
 voice_vlan_mac_table = []
-voice_access_outlet_ids = []
+data_access_outlet_ids = []
 
 try:
     fd = open(SWITCH_FILE, "r")
@@ -187,6 +187,7 @@ try:
     print(switch_list)
     # switch_list = ["bld34fl02-sw"]
     # switch_list = ["bld61fl00-sw", "bld34fl00-sw"]
+    # switch_list = ["bld69afl02-sw", "bld69bfl02-sw"]
 
     threads = []
     for sw_device in switch_list:
@@ -205,14 +206,15 @@ try:
     #     print(device)
     # for mac in voice_vlan_mac_table:
     #     print(mac)
-    # for id in voice_access_outlet_ids:
+    # for id in data_access_outlet_ids:
     #     print(id)
 
-    # Remove from voice_access_outlet_ids the ones that are assigned to an IP Phone
+    # Remove from data_access_outlet_ids the ones that are assigned to an IP Phone
+    print(data_access_outlet_ids)
     for dev in all_devices:
-        for i, id in enumerate(voice_access_outlet_ids):
+        for i, id in enumerate(data_access_outlet_ids):
             if id == dev.outlet_id:
-                voice_access_outlet_ids.pop(i)
+                data_access_outlet_ids.pop(i)
 
 except Exception as ex:
     print(ex)
@@ -257,24 +259,31 @@ except Exception as ex:
 
 
 # Database Check
+# Check if "Phone Object" outlet_ids are 'Active' and set as type 'IPphone'
 db_body = ""
 try:
     for dev in all_devices:
         if dev.outlet_id != "unknown":
-            if dev.name.startswith("ATA") or dev.name.startswith("AALN")  or dev.outlet_usedFor == "Private" or dev.outlet_usedFor =="PcLabs" or dev.outlet_status == "Active Enforced":
+            if dev.name.startswith("ATA") or dev.name.startswith("AALN") or dev.outlet_usedFor == "Private" or dev.outlet_usedFor =="PcLabs" or dev.outlet_status == "Active Enforced":
                 continue
 
+            # print(dev.outlet_id, dev.outlet_usedFor, dev.outlet_status)
+            # print(dev.name, dev.extension)
             if dev.outlet_status != "Active":
+                # Exclude from check "Locked" outlets with a StatusReason
                 if dev.outlet_status == "Locked":
                     conn = module_db_funcs.db_connect(DB_CREDS)
                     cursor = conn.cursor()
                     query = "select statusReason from access_outlets where id = '{}'".format(dev.outlet_id)
                     rows = module_db_funcs.execute_db_query(cursor, query)
                     conn.close()
-                    if rows[0] != "":
-                        continue
-                db_text = "Extension {} is not properly declared in authDB. Status is {}\n".format(dev.extension, dev.outlet_status)
-                db_body += db_text
+                    if rows[0][0] == "" or rows[0][0] is None:
+                        db_text = "Extension {} is not properly declared in authDB. Status is {}\n".format(dev.extension, dev.outlet_status)
+                        db_body += db_text
+                    # elif rows[0][0] != "" and rows[0][0] is not None:
+                    #     db_text = "Extension {} is not properly declared in authDB. Status is {}. " \
+                    #               "(status reason: {})\n".format(dev.extension, dev.outlet_status, rows[0][0])
+                    #     db_body += db_text
             if dev.outlet_usedFor != "IPphone":
                 db_text = "Extension {} is not properly declared in authDB. Type is {}\n".format(dev.extension, dev.outlet_usedFor)
                 db_body += db_text
@@ -285,11 +294,12 @@ except Exception as ex:
 
 
 # Database Check - 2
+# Check if any "voice-switch" data outlet is set as type IP Phone
 db_body2 = ""
 try:
     db_conn = module_db_funcs.db_connect(DB_CREDS)
     cursor = db_conn.cursor()
-    for id in voice_access_outlet_ids:
+    for id in data_access_outlet_ids:
         query = "select usedFor, floor_building_id, name from access_outlets where id = '{}'".format(id)
         row = module_db_funcs.execute_db_query(cursor, query)
         usedFor = row[0][0]
@@ -304,8 +314,8 @@ try:
             floor_id = row2[0][1]
             # print(building_id, floor_id)
 
-            db_text = "Outlet {}-{}-{} is type {} but no IP phone is registered to it\n".format(building_id, floor_id, outlet_id, usedFor)
-            db_body2 += db_text
+            db_text2 = "Outlet {}-{}-{} is type {} but no IP phone is registered to it\n".format(building_id, floor_id, outlet_id, usedFor)
+            db_body2 += db_text2
 
     db_conn.close()
 
@@ -349,12 +359,12 @@ Sanity check:
 %s
 
 ------------------------------------------------------------------------------------------------------------------------
-DB check (check if outlets with an IP Phone have the correct status):
+DB check (check if IP Phone outlets have the correct Type/Status):
 
 %s
 
 ------------------------------------------------------------------------------------------------------------------------
-DB check (check if type "IPphone" outlets actually have an IP phone assigned:
+DB check (check if any data outlet at voice-switches is falsely declared as type "IPphone":
 
 %s
 

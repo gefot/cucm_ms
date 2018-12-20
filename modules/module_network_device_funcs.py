@@ -471,8 +471,10 @@ def conf_flap_port(connection, vendor, module, port):
             port_label = get_port_label(vendor, device_model)
 
             command = ['interface ' + port_label + port, 'shut']
+            print("In conf_flap_port: Executing command {}".format(command))
             result = device_conft_cmd(connection, command, vendor, module)
             command = ['interface ' + port_label + port, 'no shut']
+            print("In conf_flap_port: Executing command {}".format(command))
             result = device_conft_cmd(connection, command, vendor, module)
 
 
