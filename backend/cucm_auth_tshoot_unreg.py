@@ -200,7 +200,7 @@ for dev in unreg_devices:
         RECEPIENT = "gfot@it.auth.gr, kgots@it.auth.gr"
         # RECEPIENT = "anemostaff@it.auth.gr"
         BODY = "Device shows as unregistered, but the correct MAC address is found at switchport.\n\n" \
-                "Restating device {} - {}".format(dev.extension, dev.name)
+                "Restarting device {} - {}".format(dev.extension, dev.name)
         command = "echo \"{}\" | /usr/bin/mail -s \"{}\" {}".format(BODY, SUBJECT, RECEPIENT)
         os.system(command)
 
