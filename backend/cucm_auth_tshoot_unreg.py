@@ -180,7 +180,7 @@ print("\n\n\n\n\n")
 for dev in unreg_devices:
     if dev.switchport_found_mac == "Yes":
         # dev.print_device_full_net()
-        m = re.match("([\w\d\S]+-sw)-m(\d)-p(\d+)", dev.switchport)
+        m = re.match(r"([\w\d\S]+-sw)-m(\d)-p(\d+)", dev.switchport)
         sw_device = m.group(1)
         module = m.group(2)
         port = m.group(3)
