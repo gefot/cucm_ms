@@ -83,7 +83,6 @@ def get_device_model(connection, vendor, module):
             result = device_show_cmd(connection, command, vendor, module)
             device_model = re.search(r'System Model ID\.+ ([\w\d]+)', result).group(1)
 
-
         return device_model
 
     except Exception as ex:
@@ -261,13 +260,13 @@ def get_port_label(vendor, device_model):
         port_label = ""
 
         if vendor == "cisco":
-            if re.search('WS-C2960X',device_model) or re.search('WS-C2960S',device_model):
+            if re.search('WS-C2960X', device_model) or re.search('WS-C2960S',device_model):
                 port_label = "Gi1/0/"
-            elif re.search('WS-C2960G',device_model):
+            elif re.search('WS-C2960G', device_model):
                 port_label = "Gi0/"
-            elif re.search('WS-C2960-',device_model) or re.search('WS-C2960\+',device_model):
+            elif re.search('WS-C2960-', device_model) or re.search('WS-C2960\+',device_model):
                 port_label = "Fa0/"
-            elif re.search('WS-C2950',device_model):
+            elif re.search('WS-C2950', device_model):
                 port_label = "Fa0/"
             else:
                 port_label = "Fa0/"
@@ -476,7 +475,6 @@ def conf_flap_port(connection, vendor, module, port):
             command = ['interface ' + port_label + port, 'no shut']
             print("In conf_flap_port: Executing command {}".format(command))
             result = device_conft_cmd(connection, command, vendor, module)
-
 
     except Exception as ex:
         print("conf_flap_port exception: ", ex.message)
