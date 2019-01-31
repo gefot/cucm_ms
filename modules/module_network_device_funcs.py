@@ -1,5 +1,5 @@
 
-import netmiko		# netmiko
+import netmiko  # netmiko
 import re
 import time
 
@@ -76,7 +76,7 @@ def get_device_model(connection, vendor, module):
         if vendor == "cisco":
             command = "show version"
             result = device_show_cmd(connection, command, vendor, module)
-            device_model = re.search(r'cisco (WS\-[\d\w\-\+]*)',result).group(1)
+            device_model = re.search(r'cisco (WS\-[\d\w\-\+]*)', result).group(1)
 
         elif vendor == "dell":
             command = "show version"
@@ -87,6 +87,31 @@ def get_device_model(connection, vendor, module):
 
     except Exception as ex:
         print("get_device_model exception: ", ex.message)
+
+
+########################################################################################################################
+def get_ios_version(connection, vendor, module):
+    """
+    :param connection: switch connector
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
+
+    :return: device model (eg. WS-C2950C-24)
+    """
+
+    try:
+        device_ios = ""
+
+        if vendor == "cisco":
+            command = "show version"
+            result = device_show_cmd(connection, command, vendor, module)
+            # device_ios = re.search(r', Version ([\S]+), R', result).group(1)
+            device_ios = re.search(r'System image file is "flash:(\S+)"', result).group(1)
+
+        return device_ios
+
+    except Exception as ex:
+        print("get_ios_version exception: ", ex.message)
 
 
 ########################################################################################################################
@@ -101,15 +126,17 @@ def get_cisco_cluster_members(connection):
         command = "show cluster members"
         vendor = "cisco"
         module = "0"
+
         result = device_show_cmd(connection, command, vendor, module)
 
         modules = []
         lines = re.split('\n', result)
         for l in lines:
-            m = re.search("^(\d+)\s?", l)
+            m = re.search(r"^(\d+)\s?", l)
             if m is not None:
                 modules.append(m.group(1))
-        if modules is None:
+
+        if modules is None or modules == []:
             modules = ['0']
 
         return modules
@@ -142,7 +169,6 @@ def get_switch_trunk_ports(connection, vendor, module):
                     trunk_ports.append(trunk_port)
                 except:
                     pass
-
 
         return trunk_ports
 
@@ -195,7 +221,6 @@ def discover_phones(connection, vendor, module):
                 except:
                     pass
 
-
         return neighbor_devices
 
     except Exception as ex:
@@ -240,7 +265,6 @@ def get_switch_mac_table(connection, vendor, module):
                 except:
                     pass
 
-
         return mac_entry_list
 
     except Exception as ex:
@@ -260,11 +284,11 @@ def get_port_label(vendor, device_model):
         port_label = ""
 
         if vendor == "cisco":
-            if re.search('WS-C2960X', device_model) or re.search('WS-C2960S',device_model):
+            if re.search('WS-C2960X', device_model) or re.search('WS-C2960S', device_model):
                 port_label = "Gi1/0/"
             elif re.search('WS-C2960G', device_model):
                 port_label = "Gi0/"
-            elif re.search('WS-C2960-', device_model) or re.search('WS-C2960\+',device_model):
+            elif re.search('WS-C2960-', device_model) or re.search('WS-C2960\+', device_model):
                 port_label = "Fa0/"
             elif re.search('WS-C2950', device_model):
                 port_label = "Fa0/"
@@ -303,7 +327,6 @@ def get_port_status(connection, vendor, module, port):
             elif re.findall("line protocol is down", result):
                 port_status = "down"
 
-
         return port_status
 
     except Exception as ex:
@@ -328,7 +351,7 @@ def get_port_power_status(connection, vendor, module, port):
             device_model = get_device_model(connection, vendor, module)
             port_label = get_port_label(vendor, device_model)
 
-            if re.search('WS-C.*[PL]C',device_model):
+            if re.search('WS-C.*[PL]C', device_model):
                 command = "show power inline | include " + port_label + port
                 result = device_show_cmd(connection, command, vendor, module)
 
@@ -411,7 +434,7 @@ def get_port_macs(connection, vendor, module, port):
             result = device_show_cmd(connection, command, vendor, module)
             mac_list = re.findall(r'[\w\d]+\.[\w\d]+\.[\w\d]+', result)
             for i, my_mac in enumerate(mac_list):
-                mac_list[i] = (my_mac.replace('.','')).upper()
+                mac_list[i] = (my_mac.replace('.', '')).upper()
 
         return mac_list
 
@@ -419,6 +442,31 @@ def get_port_macs(connection, vendor, module, port):
         print("get_port_macs exception: ", ex.message)
 
 
+########################################################################################################################
+def get_cpu_load(connection, vendor, module):
+    """
+    :param connection: switch connector
+    :param vendor: eg. Cisco/Dell
+    :param module: cluster/stack member number
+
+    :return: 5 second CPU of device
+    """
+
+    try:
+        cpu = ""
+
+        if vendor == "cisco":
+            command = "show process cpu"
+            result = device_show_cmd(connection, command, vendor, module)
+            cpu = re.search(r'five minutes: (\d+)', result).group(1)
+
+        return cpu
+
+    except Exception as ex:
+        print("get_cpu_load exception: ", ex.message)
+
+
+########################################################################################################################
 ########################################################################################################################
 ########################################################################################################################
 def device_conft_cmd(connection, command, vendor, module):
@@ -478,6 +526,5 @@ def conf_flap_port(connection, vendor, module, port):
 
     except Exception as ex:
         print("conf_flap_port exception: ", ex.message)
-
 
 ########################################################################################################################

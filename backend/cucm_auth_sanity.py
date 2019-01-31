@@ -55,8 +55,6 @@ def get_cdp_mac_mthread(sw_dev):
             if row[0] != "" and row[0] is not None:
                 data_access_outlet_ids.append(str(row[0]))
 
-
-
     except:
         print("device_connect_multithread -> Can not connect to device {}\n".format(sw_dev))
 
